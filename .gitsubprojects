@@ -1,0 +1,4 @@
+# -*- mode: cmake -*-
+git_subproject(Equalizer https://github.com/Eyescale/Equalizer.git master)
+git_subproject(Fivox https://github.com/BlueBrain/Fivox.git master)
+git_subproject(splotch https://github.com/tribal-tec/splotch.git master)
