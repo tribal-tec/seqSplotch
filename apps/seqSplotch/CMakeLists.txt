@@ -10,6 +10,10 @@ stringify_shaders(
   PP_FBO.frag
   PP_FBO.geom
   PP_FBO.vert
+  blur.frag
+  blur_pass.vert
+  particles.frag
+  particles.vert
 )
 
 set(SEQSPLOTCH_HEADERS

@@ -42,9 +42,9 @@ class Model
 {
 public:
     Model()
-        : params( "/home/nachbaur/dev/viz.stable/splotch/configs/fivox.par", false )
+        : params( "/home/nachbaur/dev/viz.stable/splotch/configs/snap092.par", false )
         , sMaker( params )
-        , cpuRender( true )
+        , cpuRender( false )
     {
         get_colourmaps( params, amap );
         _boost = params.find< bool >( "boost", false );

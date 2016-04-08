@@ -53,6 +53,7 @@ protected:
 
 private:
     void cpuRender( Model& model );
+    void oldGpuRender( Model& model );
     void gpuRender( Model& model );
     //State* _state;
 
@@ -60,6 +61,15 @@ private:
     bool _genFBO( Model& model );
     bool _genVBO();
     bool _genTexture();
+
+    GLuint _particleShader;
+    GLuint _blurShader;
+    eq::util::FrameBufferObject* _fbo;
+    eq::util::FrameBufferObject* _fboBlur1;
+    eq::util::FrameBufferObject* _fboBlur2;
+    GLuint _posSSBO;
+    GLuint _colorSSBO;
+    GLuint _indices;
 
     eq::util::FrameBufferObject* _fboPassThrough;
     eq::util::FrameBufferObject* _fboTonemap;
