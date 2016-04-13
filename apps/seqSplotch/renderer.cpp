@@ -463,10 +463,10 @@ void Renderer::gpuRender( Model& model )
                                   getViewMatrix() * getModelMatrix();
 
         loc = glGetUniformLocation( _particleShader, "ciProjectionMatrix" );
-        EQ_GL_CALL( glUniformMatrix4fv( loc, 1, GL_FALSE, &p[0] ));
+        EQ_GL_CALL( glUniformMatrix4fv( loc, 1, GL_FALSE, p.data( )));
 
         loc = glGetUniformLocation( _particleShader, "ciModelView" );
-        EQ_GL_CALL( glUniformMatrix4fv( loc, 1, GL_FALSE, &mv[0] ));
+        EQ_GL_CALL( glUniformMatrix4fv( loc, 1, GL_FALSE, mv.data( )));
 
         //gl::setMatrices(mCam);
 
@@ -608,7 +608,7 @@ void Renderer::oldGpuRender( Model& model )
     EQ_GL_CALL( glUseProgram( _program ));
     EQ_GL_CALL( glBindBuffer( GL_ARRAY_BUFFER, _vertexBuffer ));
 
-    EQ_GL_CALL( glUniformMatrix4fv( _matrixUniform, 1, GL_FALSE, &mvp[0] ));
+    EQ_GL_CALL( glUniformMatrix4fv( _matrixUniform, 1, GL_FALSE, mvp.data( )));
 
     EQ_GL_CALL( glEnableVertexAttribArray( 0 ));
     EQ_GL_CALL( glEnableVertexAttribArray( 1 ));

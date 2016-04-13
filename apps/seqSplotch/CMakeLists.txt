@@ -33,7 +33,7 @@ install(FILES particle.tga DESTINATION share/seqSplotch/data COMPONENT apps)
 
 set(SEQSPLOTCH_LINK_LIBRARIES Sequel splotch)
 if(TARGET splotchCUDA)
-  common_package(CUDA)
+  common_find_package(CUDA)
   set(CUDA_HOST_COMPILER "/usr/bin/gcc")
   list(APPEND CUDA_NVCC_FLAGS "-std=c++11 -arch=sm_30 -dc")
   #set(CUDA_PROPAGATE_HOST_FLAGS OFF)

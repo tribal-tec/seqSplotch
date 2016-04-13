@@ -14,11 +14,11 @@ set(SEQSPLOTCH_LICENSE LGPL BSD)
 
 set(COMMON_PROJECT_DOMAIN ch.epfl.bluebrain)
 include(Common)
-common_package(Equalizer REQUIRED)
+common_find_package(Equalizer REQUIRED)
 if(NOT TARGET splotch)
-  common_package(splotch REQUIRED)
+  common_find_package(splotch REQUIRED)
 endif()
-common_package_post()
+common_find_package_post()
 
 add_subdirectory(apps)
 
