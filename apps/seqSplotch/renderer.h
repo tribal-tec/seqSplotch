@@ -62,6 +62,8 @@ private:
     bool _genVBO();
     bool _genTexture();
 
+    lunchbox::Buffer< float > _pixels;
+
     GLuint _particleShader;
     GLuint _blurShader;
     eq::util::FrameBufferObject* _fbo;

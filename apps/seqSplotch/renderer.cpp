@@ -28,6 +28,8 @@
 
 #include "renderer.h"
 
+#include "model.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -271,13 +273,14 @@ void Renderer::cpuRender( Model& model )
     seq::Vector3f up;
     getModelMatrix().getLookAt( eye, lookAt, up );
 
-    const int xres = getPixelViewport().w;
-    const int yres = getPixelViewport().h;
+    const int width = getPixelViewport().w;
+    const int height = getPixelViewport().h;
 
-    model.params.setParam( "xres", xres );
-    model.params.setParam( "yres", yres );
+    paramfile& params = model.getParams();
+    params.setParam( "xres", width );
+    params.setParam( "yres", height );
 
-    arr2<COLOUR> pic( xres, yres );
+    arr2<COLOUR> pic( width, height );
 
     auto particles = model.getParticles();
 #ifdef CUDA
@@ -286,23 +289,23 @@ void Renderer::cpuRender( Model& model )
                     vec3( eye.x(), eye.y(), eye.z()),
                     vec3( lookAt.x(), lookAt.y(), lookAt.z()),
                     vec3( up.x(), up.y(), up.z()),
-                    model.amap, model.b_brightness, model.params );
+                    model.amap, model.b_brightness, params );
 #else
-    host_rendering( model.params, particles, pic,
+    host_rendering( params, particles, pic,
                     vec3( eye.x(), eye.y(), eye.z()),
                     vec3( eye.x(), eye.y(), eye.z()),
                     vec3( lookAt.x(), lookAt.y(), lookAt.z()),
                     vec3( up.x(), up.y(), up.z()),
-                    model.amap, model.b_brightness, particles.size( ));
+                    model.getColorMaps(), model.getBrightness(), particles.size( ));
 #endif
 
-    bool a_eq_e = model.params.find<bool>("a_eq_e",true);
+    bool a_eq_e = params.find<bool>("a_eq_e",true);
     if( a_eq_e )
     {
         exptable<float32> xexp(-20.0);
 #pragma omp parallel for
-      for (int ix=0;ix<xres;ix++)
-        for (int iy=0;iy<yres;iy++)
+      for (int ix=0;ix<width;ix++)
+        for (int iy=0;iy<height;iy++)
           {
           pic[ix][iy].r=-xexp.expm1(pic[ix][iy].r);
           pic[ix][iy].g=-xexp.expm1(pic[ix][iy].g);
@@ -310,37 +313,34 @@ void Renderer::cpuRender( Model& model )
           }
     }
 
-    double gamma=model.params.find<double>("pic_gamma",1.0);
-    double helligkeit=model.params.find<double>("pic_brighness",0.0);
-    double kontrast=model.params.find<double>("pic_contrast",1.0);
+    const double gamma = params.find<double>("pic_gamma",1.0);
+    const double helligkeit = params.find<double>("pic_brighness",0.0);
+    const double kontrast = params.find<double>("pic_contrast",1.0);
 
-    if (gamma != 1.0 || helligkeit != 0.0 || kontrast != 1.0)
-      {
-#pragma omp parallel for
-        for (tsize i=0; i<pic.size1(); ++i)
-          for (tsize j=0; j<pic.size2(); ++j)
-        {
-          pic[i][j].r = kontrast * pow((double)pic[i][j].r,gamma) + helligkeit;
-              pic[i][j].g = kontrast * pow((double)pic[i][j].g,gamma) + helligkeit;
-              pic[i][j].b = kontrast * pow((double)pic[i][j].b,gamma) + helligkeit;
-        }
-       }
-
-    float* pixels = new float[xres*yres*3];
-    int k = 0;
-    for( int j = 0; j < yres; ++j )
+    if( gamma != 1.0 || helligkeit != 0.0 || kontrast != 1.0 )
     {
-        for( int i = 0; i < xres; ++i )
+#pragma omp parallel for
+        for( tsize i = 0; i < pic.size1(); ++i )
         {
-            pixels[k++] = pic[i][j].r;
-            pixels[k++] = pic[i][j].g;
-            pixels[k++] = pic[i][j].b;
-        }
+            for( tsize j = 0; j < pic.size2(); ++j )
+            {
+                pic[i][j].r = kontrast * pow((double)pic[i][j].r,gamma) + helligkeit;
+                pic[i][j].g = kontrast * pow((double)pic[i][j].g,gamma) + helligkeit;
+                pic[i][j].b = kontrast * pow((double)pic[i][j].b,gamma) + helligkeit;
+            }
+       }
+    }
+
+    _pixels.grow( width*height*3 );
+    int k = 0;
+    for( int j = 0; j < height; ++j )
+    {
+        for( int i = 0; i < width; ++i, k+=3 )
+            memcpy( &_pixels[k], &pic[i][j], 3 * sizeof( float ));
     }
 
     glWindowPos2i( 0, 0 );
-    glDrawPixels(xres,yres,GL_RGB,GL_FLOAT,pixels);
-    delete [] pixels;
+    glDrawPixels( width, height, GL_RGB, GL_FLOAT, _pixels.getData( ));
 }
 
 void Renderer::gpuRender( Model& model )
@@ -548,6 +548,7 @@ void Renderer::gpuRender( Model& model )
 //    }
 }
 
+#if 0
 void Renderer::oldGpuRender( Model& model )
 {
     if( !_fboPassThrough )
@@ -718,6 +719,7 @@ void Renderer::oldGpuRender( Model& model )
 //    //fboTMMaterial->Unbind();
 //    EQ_GL_CALL( glUseProgram( 0 ));
 }
+#endif
 
 void Renderer::draw( co::Object* /*frameDataObj*/ )
 {
@@ -728,47 +730,11 @@ void Renderer::draw( co::Object* /*frameDataObj*/ )
 
     applyRenderContext(); // set up OpenGL State
 
-    if( model.cpuRender )
+    const bool useCpuRender = true;
+    if( useCpuRender )
         cpuRender( model );
     else
         gpuRender( model );
-//    const FrameData* frameData = static_cast< FrameData* >( frameDataObj );
-//    Application& application = static_cast< Application& >( getApplication( ));
-//    const eq::uint128_t& id = frameData->getModelID();
-//    const Model* model = application.getModel( id );
-//    if( !model )
-//        return;
-
-//    updateNearFar( model->getBoundingSphere( ));
-//    applyRenderContext();
-
-//    glLightfv( GL_LIGHT0, GL_POSITION, lightPosition );
-//    glLightfv( GL_LIGHT0, GL_AMBIENT,  lightAmbient  );
-//    glLightfv( GL_LIGHT0, GL_DIFFUSE,  lightDiffuse  );
-//    glLightfv( GL_LIGHT0, GL_SPECULAR, lightSpecular );
-
-//    glMaterialfv( GL_FRONT, GL_AMBIENT,   materialAmbient );
-//    glMaterialfv( GL_FRONT, GL_DIFFUSE,   materialDiffuse );
-//    glMaterialfv( GL_FRONT, GL_SPECULAR,  materialSpecular );
-//    glMateriali(  GL_FRONT, GL_SHININESS, materialShininess );
-
-//    applyModelMatrix();
-
-//    glColor3f( .75f, .75f, .75f );
-
-//    // Compute cull matrix
-//    const eq::Matrix4f& modelM = getModelMatrix();
-//    const eq::Matrix4f& view = getViewMatrix();
-//    const eq::Frustumf& frustum = getFrustum();
-//    const eq::Matrix4f projection = frustum.compute_matrix();
-//    const eq::Matrix4f pmv = projection * view * modelM;
-//    const seq::RenderContext& context = getRenderContext();
-
-//    _state->setProjectionModelViewMatrix( pmv );
-//    _state->setRange( triply::Range( &context.range.start ));
-//    _state->setColors( model->hasColors( ));
-
-//    model->cullDraw( *_state );
 }
 
 }

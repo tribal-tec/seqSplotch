@@ -18,13 +18,17 @@ stringify_shaders(
 
 set(SEQSPLOTCH_HEADERS
   application.h
+  model.h
   renderer.h
+  viewData.h
 )
 
 set(SEQSPLOTCH_SOURCES
   application.cpp
-  renderer.cpp
   main.cpp
+  model.cpp
+  renderer.cpp
+  viewData.cpp
   ${SHADER_SOURCES}
 )
 

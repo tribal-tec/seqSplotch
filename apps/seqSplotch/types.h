@@ -26,39 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SEQ_SPLOTCH_APPLICATION_H
-#define SEQ_SPLOTCH_APPLICATION_H
+#ifndef SEQ_SPLOTCH_TYPES_H
+#define SEQ_SPLOTCH_TYPES_H
 
-#include <seq/sequel.h>
-
-#include "types.h"
-
-/** The Sequel polygonal rendering example. */
 namespace seqSplotch
 {
 
-class Application : public seq::Application
-{
-public:
-    Application();
-    ~Application();
-
-    bool init( const int argc, char** argv );
-    bool run();
-    bool exit() final;
-
-    seq::Renderer* createRenderer()  final;
-    co::Object* createObject( const uint32_t type ) final;
-
-    Model& getModel();
-
-private:
-    seq::ViewData* createViewData( seq::View& view ) final;
-    void destroyViewData( seq::ViewData* viewData ) final;
-
-    std::unique_ptr< Model > _model;
-    ViewData* _viewData;
-};
+class Model;
+class ViewData;
 
 }
 

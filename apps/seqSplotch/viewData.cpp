@@ -26,40 +26,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SEQ_SPLOTCH_APPLICATION_H
-#define SEQ_SPLOTCH_APPLICATION_H
+#include "viewData.h"
 
-#include <seq/sequel.h>
+#include "model.h"
 
-#include "types.h"
-
-/** The Sequel polygonal rendering example. */
 namespace seqSplotch
 {
 
-class Application : public seq::Application
+ViewData::ViewData( seq::View& view, Model& model )
+    : seq::ViewData( view )
+    , _initialModelMatrix( model.getModelMatrix( ))
+    , _model( model )
 {
-public:
-    Application();
-    ~Application();
-
-    bool init( const int argc, char** argv );
-    bool run();
-    bool exit() final;
-
-    seq::Renderer* createRenderer()  final;
-    co::Object* createObject( const uint32_t type ) final;
-
-    Model& getModel();
-
-private:
-    seq::ViewData* createViewData( seq::View& view ) final;
-    void destroyViewData( seq::ViewData* viewData ) final;
-
-    std::unique_ptr< Model > _model;
-    ViewData* _viewData;
-};
-
+    view.setModelUnit( EQ_MM );
+    setModelMatrix( _initialModelMatrix );
 }
 
-#endif
+ViewData::~ViewData()
+{}
+
+bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
+{
+    const eq::Event& event = event_->data;
+    switch( event.type )
+    {
+    case eq::Event::KEY_PRESS:
+        switch( event.keyPress.key )
+        {
+        case ' ':
+            setModelMatrix( _initialModelMatrix );
+            return true;
+        case 'n':
+            _model.loadNextFrame();
+            return true;
+        }
+    }
+    return seq::ViewData::handleEvent( event_ );
+}
+
+}

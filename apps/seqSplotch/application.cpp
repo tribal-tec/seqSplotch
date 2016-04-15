@@ -28,34 +28,27 @@
 
 #include "application.h"
 
+#include "model.h"
 #include "renderer.h"
-
-#include <splotch/splotch_host.h>
-
-#pragma warning( disable: 4275 )
-#include <boost/program_options.hpp>
-#pragma warning( default: 4275 )
-
-#ifndef MIN
-#  define MIN LB_MIN
-#endif
-
-namespace po = boost::program_options;
+#include "viewData.h"
 
 namespace seqSplotch
 {
+
 Application::Application()
     : _viewData( nullptr )
 {}
 
+Application::~Application()
+{}
+
 bool Application::init( const int argc, char** argv )
 {
-    _loadModel(/* models */);
-    //const eq::Strings& models = _parseArguments( argc, argv );
-    if( !seq::Application::init( argc, argv, nullptr ))
-        return false;
+    const servus::URI uri( argc > 1 ? std::string( argv[1] )
+                   : std::string( "/home/nachbaur/dev/viz.stable/splotch/configs/snap092.par" ));
+    _model.reset( new Model( uri ));
 
-    return true;
+    return seq::Application::init( argc, argv, nullptr );
 }
 
 bool Application::run()
@@ -65,7 +58,7 @@ bool Application::run()
 
 bool Application::exit()
 {
-    //_unloadModel();
+    _model.reset();
     return seq::Application::exit();
 }
 
@@ -98,127 +91,9 @@ void Application::destroyViewData( seq::ViewData* viewData )
         _viewData = nullptr;
 }
 
-//eq::Strings Application::_parseArguments( const int argc, char** argv )
-//{
-//    std::string userDefinedModelPath("");
-
-//    try //parse command line arguments
-//    {
-//        po::options_description options(
-//            std::string("seqPly - Sequel polygonal rendering example ")
-//            + eq::Version::getString( ));
-//        bool showHelp(false);
-
-//        options.add_options()
-//            ( "help,h", po::bool_switch(&showHelp)->default_value(false),
-//              "produce help message" )
-//            ( "model,m", po::value<std::string>(&userDefinedModelPath),
-//              "ply model file name" );
-
-//        // parse program options, ignore all non related options
-//        po::variables_map variableMap;
-//        po::store( po::command_line_parser( argc, argv ).options(
-//                       options ).allow_unregistered().run(),
-//                   variableMap );
-//        po::notify( variableMap );
-
-//        // Evaluate parsed command line options
-//        if( showHelp )
-//        {
-//            LBWARN << options << std::endl;
-//            ::exit( EXIT_SUCCESS );
-//        }
-//    }
-//    catch( std::exception& exception )
-//    {
-//        LBERROR << "Error parsing command line: " << exception.what()
-//            << std::endl;
-//    }
-
-
-//    eq::Strings filenames;
-//    filenames.push_back( lunchbox::getRootPath() +
-//                         "/share/Equalizer/data" );
-
-//    if( !userDefinedModelPath.empty( ))
-//    {
-//        filenames.clear();
-//        filenames.push_back( userDefinedModelPath );
-//    }
-//    return filenames;
-//}
-
-void Application::_loadModel()
+Model& Application::getModel()
 {
-    _model.reset( new Model );
-
-//    eq::Strings files = models;
-//    while( !files.empty( ))
-//    {
-//        const std::string filename = files.back();
-//        files.pop_back();
-
-//        if( _isPlyfile( filename ))
-//        {
-//            _model = new Model;
-//            if( _model->readFromFile( filename.c_str( )))
-//            {
-//                _modelDist = new ModelDist( _model );
-//                _modelDist->registerTree( this );
-//                _frameData.setModelID( _modelDist->getID( ));
-//                return;
-//            }
-//            delete _model;
-//            _model = 0;
-//        }
-//        else
-//        {
-//            const std::string basename = lunchbox::getFilename( filename );
-//            if( basename == "." || basename == ".." )
-//                continue;
-
-//            // recursively search directories
-//            const eq::Strings subFiles = lunchbox::searchDirectory( filename,
-//                                                                    ".*" );
-//            for(eq::StringsCIter i = subFiles.begin(); i != subFiles.end(); ++i)
-//                files.push_back( filename + '/' + *i );
-//        }
-//    }
-}
-
-//void Application::_unloadModel()
-//{
-//    if( !_modelDist )
-//        return;
-
-//    _modelDist->deregisterTree();
-//    delete _modelDist;
-//    _modelDist = 0;
-
-//    delete _model;
-//    _model = 0;
-//}
-
-Model& Application::getModel(/* const eq::uint128_t& modelID */)
-{
-//    if( modelID == 0 )
-//        return 0;
-//    if( _model )
-//        return _model;
-    //lunchbox::memoryBarrier();
-
-    // Accessed concurrently from render threads
-    //lunchbox::ScopedMutex<> mutex( _modelLock );
-//    if( _model )
      return *_model;
-
-//    LBASSERT( !_modelDist );
-//    _modelDist = new ModelDist;
-//    Model* model = _modelDist->loadModel( getMasterNode(), this, modelID );
-//    LBASSERT( model );
-//    _model = model;
-
-//    return model;
 }
 
 }

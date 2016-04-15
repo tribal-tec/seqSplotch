@@ -26,38 +26,50 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SEQ_SPLOTCH_APPLICATION_H
-#define SEQ_SPLOTCH_APPLICATION_H
+#ifndef SEQ_SPLOTCH_MODEL_H
+#define SEQ_SPLOTCH_MODEL_H
 
 #include <seq/sequel.h>
 
-#include "types.h"
+#include <splotch/scenemaker.h>
+#include <splotch/splotch_host.h>
 
-/** The Sequel polygonal rendering example. */
 namespace seqSplotch
 {
 
-class Application : public seq::Application
+class Model
 {
 public:
-    Application();
-    ~Application();
+    explicit Model( const servus::URI& uri );
 
-    bool init( const int argc, char** argv );
-    bool run();
-    bool exit() final;
+    void loadNextFrame();
 
-    seq::Renderer* createRenderer()  final;
-    co::Object* createObject( const uint32_t type ) final;
+    std::vector< particle_sim > getParticles() const;
 
-    Model& getModel();
+    seq::Matrix4f getModelMatrix() const;
+
+    paramfile& getParams();
+    std::vector< COLOURMAP >& getColorMaps();
+    float getBrightness() const;
 
 private:
-    seq::ViewData* createViewData( seq::View& view ) final;
-    void destroyViewData( seq::ViewData* viewData ) final;
+    paramfile _params;
+    sceneMaker _sceneMaker;
+    std::vector< particle_sim > _particles;
+    std::vector< particle_sim > _points;
+    std::vector< COLOURMAP > _colorMaps;
+    vec3 _cameraPosition;
+    vec3 _centerPosition;
+    vec3 _lookAt;
+    vec3 _sky;
+    std::string _outfile;
+    bool _boost;
+    float _brightness;
 
-    std::unique_ptr< Model > _model;
-    ViewData* _viewData;
+    // gpu only
+    std::vector<float> _brightnesses;
+    std::vector<float> _smoothingLength;
+    float _radialMod;
 };
 
 }
