@@ -280,13 +280,15 @@ void Renderer::gpuRender( Model& model )
         EQ_GL_CALL( glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ));
 
         EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 ));
+
+        setNearFar( 0.1, 100000 );
     }
 
     float brightnessMod = 1.0;
     float saturation = 1.0;
     float contrast   = 1.0;
     float particleSize = 0.6;
-    float nParticleSize = particleSize * 1;
+    float nParticleSize = particleSize * 10;
 
 #ifdef BLUR
     float blurStrength = 0.13f;
@@ -315,18 +317,17 @@ void Renderer::gpuRender( Model& model )
         _fbo->bind();
 #endif
 
-        EQ_GL_CALL( glClearColor( 0.9, 0.2, 0.2, 1.0 ));
         EQ_GL_CALL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ));
 
-        const seq::Matrix4f p = getFrustum().computePerspectiveMatrix();
-        const seq::Matrix4f mv = /*getFrustum().computePerspectiveMatrix() **/
-                                  getViewMatrix() * getModelMatrix();
+        const seq::Matrix4f projectionMatrix = getFrustum().computePerspectiveMatrix();
+        seq::Matrix4f modelViewMatrix = getViewMatrix() * getModelMatrix();
+        modelViewMatrix( 3, 2 ) = -modelViewMatrix( 3, 2 );
 
         loc = glGetUniformLocation( _particleShader, "ciProjectionMatrix" );
-        EQ_GL_CALL( glUniformMatrix4fv( loc, 1, GL_FALSE, p.data( )));
+        EQ_GL_CALL( glUniformMatrix4fv( loc, 1, GL_FALSE, projectionMatrix.data( )));
 
         loc = glGetUniformLocation( _particleShader, "ciModelView" );
-        EQ_GL_CALL( glUniformMatrix4fv( loc, 1, GL_FALSE, mv.data( )));
+        EQ_GL_CALL( glUniformMatrix4fv( loc, 1, GL_FALSE, modelViewMatrix.data( )));
 
         EQ_GL_CALL( glEnable( GL_BLEND ));
         EQ_GL_CALL( glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA ));
