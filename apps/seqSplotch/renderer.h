@@ -42,8 +42,6 @@ public:
     Renderer( seq::Application& app );
     virtual ~Renderer() {}
 
-    //State& getState() { return *_state; }
-
 protected:
     bool init( co::Object* initData ) final;
     bool initContext( co::Object* initData ) final;
@@ -75,16 +73,6 @@ private:
     GLuint _posSSBO;
     GLuint _colorSSBO;
     GLuint _indices;
-
-    eq::util::FrameBufferObject* _fboPassThrough;
-    eq::util::FrameBufferObject* _fboTonemap;
-    eq::util::Texture* _texture;
-    GLuint _vertexBuffer;
-    GLuint _program;
-    GLuint _passThroughShader;
-    GLuint _tonemapShader;
-    GLuint _matrixUniform;
-    seq::Matrix4f _oldModelMatrix;
 };
 
 }

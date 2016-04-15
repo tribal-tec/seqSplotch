@@ -3,13 +3,6 @@
 include(StringifyShaders)
 
 stringify_shaders(
-  FBO_Passthrough.frag
-  FBO_Passthrough.vert
-  FBO_ToneMap.frag
-  FBO_ToneMap.vert
-  PP_FBO.frag
-  PP_FBO.geom
-  PP_FBO.vert
   blur.frag
   blur_pass.vert
   particles.frag
@@ -31,9 +24,6 @@ set(SEQSPLOTCH_SOURCES
   viewData.cpp
   ${SHADER_SOURCES}
 )
-
-file(COPY particle.tga DESTINATION ${CMAKE_BINARY_DIR}/share/seqSplotch/data)
-install(FILES particle.tga DESTINATION share/seqSplotch/data COMPONENT apps)
 
 set(SEQSPLOTCH_LINK_LIBRARIES Sequel splotch)
 if(TARGET splotchCUDA)

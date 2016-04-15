@@ -44,7 +44,7 @@ ViewData::ViewData( seq::View& view, Model* model )
     : seq::ViewData( view )
     , _initialModelMatrix( model->getModelMatrix( ))
     , _model( model )
-    , _useCPURendering( true )
+    , _useCPURendering( false )
 {
     view.setModelUnit( EQ_MM );
     setModelMatrix( _initialModelMatrix );

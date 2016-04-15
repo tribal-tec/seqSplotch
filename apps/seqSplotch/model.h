@@ -51,6 +51,7 @@ public:
     paramfile& getParams();
     std::vector< COLOURMAP >& getColorMaps();
     float getBrightness() const;
+    const std::vector<bool>& getColourIsVec() const;
 
 private:
     paramfile _params;
@@ -67,8 +68,7 @@ private:
     float _brightness;
 
     // gpu only
-    std::vector<float> _brightnesses;
-    std::vector<float> _smoothingLength;
+    std::vector<bool> _colourIsVec;
     float _radialMod;
 };
 

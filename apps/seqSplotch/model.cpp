@@ -43,18 +43,7 @@ Model::Model( const servus::URI& uri )
     const unsigned numTypes = _params.find<int>( "ptypes", 1 );
 
     for(unsigned i = 0; i < numTypes; i++)
-    {
-        _brightnesses.push_back(_params.find<float>("brightness"+dataToString(i),1.f) * _params.find<float>("pv_brightness_mod"+dataToString(i),1.f));
-        //colour_is_vec.push_back(splotchParams->find<bool>("color_is_vector"+dataToString(i),0));
-        _smoothingLength.push_back(_params.find<float>("size_fix"+dataToString(i),0) );
-    }
-
-    // Ensure unused elements up to tenth are 1 (static size 10 array in shader)
-    if(_brightnesses.size()<10)
-        _brightnesses.resize(10,1);
-
-    if(_smoothingLength.size()<10)
-        _smoothingLength.resize(10,0);
+        _colourIsVec.push_back( _params.find<bool>("color_is_vector" + dataToString(i), 0 ));
 
     loadNextFrame();
 }
@@ -93,6 +82,11 @@ std::vector< COLOURMAP >& Model::getColorMaps()
 float Model::getBrightness() const
 {
     return _brightness;
+}
+
+const std::vector<bool>& Model::getColourIsVec() const
+{
+    return _colourIsVec;
 }
 
 }
