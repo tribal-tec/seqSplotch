@@ -30,6 +30,8 @@
 
 #include "model.h"
 
+#include <eq/view.h>
+
 namespace seqSplotch
 {
 
@@ -37,6 +39,7 @@ ViewData::ViewData( seq::View& view )
     : seq::ViewData( view )
     , _model( nullptr )
     , _useCPURendering( true )
+    , _view( view )
 {
 }
 
@@ -45,13 +48,21 @@ ViewData::ViewData( seq::View& view, Model* model )
     , _initialModelMatrix( model->getModelMatrix( ))
     , _model( model )
     , _useCPURendering( false )
+    , _view( view )
 {
-    view.setModelUnit( EQ_MM );
+    view.setModelUnit( EQ_MM *10.);
     setModelMatrix( _initialModelMatrix );
 }
 
 ViewData::~ViewData()
 {}
+
+float ViewData::getFOV() const
+{
+    eq::Projection proj;
+    proj = _view.getWall();
+    return proj.fov[0];
+}
 
 bool ViewData::useCPURendering() const
 {

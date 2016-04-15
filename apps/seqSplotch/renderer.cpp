@@ -125,6 +125,8 @@ void Renderer::cpuRender( Model& model )
     paramfile& params = model.getParams();
     params.setParam( "xres", width );
     params.setParam( "yres", height );
+    const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
+    params.setParam( "fov", viewData->getFOV( ));
 
     arr2<COLOUR> pic( width, height );
 
@@ -354,20 +356,28 @@ void Renderer::gpuRender( Model& model )
     {
 
         {
-            gl::ScopedViewport scpVp(0, 0, mFboBlur1->getWidth(), mFboBlur1->getHeight());
-            gl::ScopedFramebuffer fbScp(mFboBlur1);
-            gl::ScopedGlslProg scopedblur(_blurShader);
-            gl::ScopedTextureBind tex0(mFbo->getColorTexture(), (uint8_t)0);
-            gl::setMatricesWindowPersp(mFboBlur1->getWidth(), mFboBlur1->getHeight());
+            //gl::ScopedViewport scpVp(0, 0, mFboBlur1->getWidth(), mFboBlur1->getHeight());
+            _fboBlur1->bind();
+            EQ_GL_CALL( glUseProgram( _blurShader ));
+            //gl::ScopedTextureBind tex0(mFbo->getColorTexture(), (uint8_t)0);
+            //gl::setMatricesWindowPersp(mFboBlur1->getWidth(), mFboBlur1->getHeight());
 
-            gl::clear(Color::black());
+            EQ_GL_CALL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ));
 
-            _blurShader->uniform("tex0", 0);
+            GLint loc = glGetUniformLocation( _blurShader, "tex0" );
+            EQ_GL_CALL( glUniform1i( loc, 0 ));
 
-            _blurShader->uniform("sampleOffset", ci::vec2(blurStrength / mFboBlur1->getWidth(), 0.0f));
-            _blurShader->uniform("colorModifier", blurColorModifier);
+            loc = glGetUniformLocation( _blurShader, "sampleOffset" );
+            const seq::Vec2f sampleOffset( blurStrength / mFboBlur1->getWidth(), 0.0f );
+            EQ_GL_CALL( glUniform2fv( loc, sampleOffset.data( )));
+
+            loc = glGetUniformLocation( _blurShader, "colorModifier" );
+            EQ_GL_CALL( glUniform1f( loc, blurColorModifier ));
 
             gl::drawSolidRect(mFboBlur1->getBounds());
+
+            EQ_GL_CALL( glUseProgram( 0 ));
+            _fboBlur1->unbind();
         }
 
         {

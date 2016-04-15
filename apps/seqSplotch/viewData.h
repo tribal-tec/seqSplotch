@@ -45,6 +45,7 @@ public:
 
     bool handleEvent( const eq::ConfigEvent* event_ ) final;
     bool useCPURendering() const;
+    float getFOV() const;
 
 private:
     enum DirtyBits
@@ -58,6 +59,7 @@ private:
     const seq::Matrix4f _initialModelMatrix;
     Model* _model;
     bool _useCPURendering;
+    seq::View& _view;
 };
 
 }
