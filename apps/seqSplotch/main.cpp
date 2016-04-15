@@ -30,7 +30,7 @@
 
 int main( const int argc, char** argv )
 {
-    std::unique_ptr< seqSplotch::Application > app( new seqSplotch::Application );
+    lunchbox::RefPtr< seqSplotch::Application > app( new seqSplotch::Application );
 
     if( app->init( argc, argv ) && app->run() && app->exit( ))
         return EXIT_SUCCESS;

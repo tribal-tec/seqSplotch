@@ -33,10 +33,18 @@
 namespace seqSplotch
 {
 
-ViewData::ViewData( seq::View& view, Model& model )
+ViewData::ViewData( seq::View& view )
     : seq::ViewData( view )
-    , _initialModelMatrix( model.getModelMatrix( ))
+    , _model( nullptr )
+    , _useCPURendering( true )
+{
+}
+
+ViewData::ViewData( seq::View& view, Model* model )
+    : seq::ViewData( view )
+    , _initialModelMatrix( model->getModelMatrix( ))
     , _model( model )
+    , _useCPURendering( true )
 {
     view.setModelUnit( EQ_MM );
     setModelMatrix( _initialModelMatrix );
@@ -44,6 +52,11 @@ ViewData::ViewData( seq::View& view, Model& model )
 
 ViewData::~ViewData()
 {}
+
+bool ViewData::useCPURendering() const
+{
+    return _useCPURendering;
+}
 
 bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
 {
@@ -57,11 +70,30 @@ bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
             setModelMatrix( _initialModelMatrix );
             return true;
         case 'n':
-            _model.loadNextFrame();
+            _model->loadNextFrame();
+            return true;
+        case 'r':
+            _useCPURendering = !_useCPURendering;
+            setDirty( DIRTY_CPURENDERING );
             return true;
         }
     }
     return seq::ViewData::handleEvent( event_ );
+}
+
+void ViewData::serialize( co::DataOStream& os, const uint64_t dirtyBits )
+{
+    seq::ViewData::serialize( os, dirtyBits );
+    if( dirtyBits & DIRTY_CPURENDERING )
+        os << _useCPURendering;
+}
+
+void ViewData::deserialize( co::DataIStream& is, const uint64_t dirtyBits )
+{
+    seq::ViewData::deserialize( is, dirtyBits );
+    if( dirtyBits & DIRTY_CPURENDERING )
+        is >> _useCPURendering;
+
 }
 
 }

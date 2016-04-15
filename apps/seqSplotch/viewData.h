@@ -39,14 +39,25 @@ namespace seqSplotch
 class ViewData : public seq::ViewData
 {
 public:
-    ViewData( seq::View& view, Model& model );
+    explicit ViewData( seq::View& view );
+    ViewData( seq::View& view, Model* model );
     ~ViewData();
 
     bool handleEvent( const eq::ConfigEvent* event_ ) final;
+    bool useCPURendering() const;
 
 private:
+    enum DirtyBits
+    {
+        DIRTY_CPURENDERING = seq::ViewData::DIRTY_CUSTOM << 0
+    };
+
+    void serialize( co::DataOStream& os, const uint64_t dirtyBits ) final;
+    void deserialize( co::DataIStream& is, const uint64_t dirtyBits ) final;
+
     const seq::Matrix4f _initialModelMatrix;
-    Model& _model;
+    Model* _model;
+    bool _useCPURendering;
 };
 
 }

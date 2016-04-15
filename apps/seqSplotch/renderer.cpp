@@ -29,6 +29,7 @@
 #include "renderer.h"
 
 #include "model.h"
+#include "viewData.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -721,17 +722,26 @@ void Renderer::oldGpuRender( Model& model )
 }
 #endif
 
+seq::ViewData* Renderer::createViewData( seq::View& view )
+{
+    return new ViewData( view );
+}
+
+void Renderer::destroyViewData( seq::ViewData* viewData )
+{
+    delete viewData;
+}
+
 void Renderer::draw( co::Object* /*frameDataObj*/ )
 {
-    //const FrameData* frameData = static_cast< FrameData* >( frameDataObj );
+    const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
 
     Application& application = static_cast< Application& >( getApplication( ));
     Model& model = application.getModel();
 
     applyRenderContext(); // set up OpenGL State
 
-    const bool useCpuRender = true;
-    if( useCpuRender )
+    if( viewData->useCPURendering( ))
         cpuRender( model );
     else
         gpuRender( model );

@@ -57,7 +57,6 @@ private:
     void destroyViewData( seq::ViewData* viewData ) final;
 
     std::unique_ptr< Model > _model;
-    ViewData* _viewData;
 };
 
 }

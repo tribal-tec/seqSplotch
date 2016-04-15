@@ -36,7 +36,6 @@ namespace seqSplotch
 {
 
 Application::Application()
-    : _viewData( nullptr )
 {}
 
 Application::~Application()
@@ -81,14 +80,12 @@ co::Object* Application::createObject( const uint32_t type )
 
 seq::ViewData* Application::createViewData( seq::View& view )
 {
-    _viewData = new ViewData( view, *_model );
-    return _viewData;
+    return new ViewData( view, _model.get( ));
 }
 
 void Application::destroyViewData( seq::ViewData* viewData )
 {
-    if( _viewData == viewData )
-        _viewData = nullptr;
+    delete viewData;
 }
 
 Model& Application::getModel()

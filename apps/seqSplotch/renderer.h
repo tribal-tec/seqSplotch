@@ -51,6 +51,9 @@ protected:
     bool exit() final;
     void draw( co::Object* frameData ) final;
 
+    seq::ViewData* createViewData( seq::View& view ) final;
+    void destroyViewData( seq::ViewData* viewData ) final;
+
 private:
     void cpuRender( Model& model );
     void oldGpuRender( Model& model );
