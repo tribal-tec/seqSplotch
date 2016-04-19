@@ -361,7 +361,7 @@ void Renderer::gpuRender( Model& model )
 
             EQ_GL_CALL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ));
 
-            GLint loc = glGetUniformLocation( _blurShader, "tex0" );
+            loc = glGetUniformLocation( _blurShader, "tex0" );
             EQ_GL_CALL( glUniform1i( loc, 0 ));
 
             loc = glGetUniformLocation( _blurShader, "sampleOffset" );
@@ -388,7 +388,7 @@ void Renderer::gpuRender( Model& model )
                 glTexCoord2f( 0.0f, float( pvp.h ));
                 glVertex3f( coords[0], coords[3], 0.0f );
             glEnd();
-            
+
             EQ_GL_CALL( glBindTexture( _fbo->getColorTextures()[0]->getTarget(), 0 ));
             EQ_GL_CALL( glUseProgram( 0 ));
             _fboBlur1->unbind();
@@ -402,7 +402,7 @@ void Renderer::gpuRender( Model& model )
 
             EQ_GL_CALL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ));
 
-            GLint loc = glGetUniformLocation( _blurShader, "tex0" );
+            loc = glGetUniformLocation( _blurShader, "tex0" );
             EQ_GL_CALL( glUniform1i( loc, 0 ));
 
             loc = glGetUniformLocation( _blurShader, "sampleOffset" );
@@ -411,7 +411,7 @@ void Renderer::gpuRender( Model& model )
 
             loc = glGetUniformLocation( _blurShader, "colorModifier" );
             EQ_GL_CALL( glUniform1f( loc, blurColorModifier ));
-            
+
             EQ_GL_CALL( glDisable( GL_LIGHTING ));
             EQ_GL_CALL( glEnable( GL_TEXTURE_RECTANGLE_ARB ));
 
