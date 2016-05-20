@@ -44,7 +44,7 @@ public:
 
     void loadNextFrame();
 
-    std::vector< particle_sim > getParticles() const;
+    const std::vector< particle_sim >& getParticles() const;
 
     seq::Matrix4f getModelMatrix() const;
     const seq::Vector4f& getBoundingSphere() const;

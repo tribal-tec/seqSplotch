@@ -57,7 +57,7 @@ void Model::loadNextFrame()
     _computeBoundingSphere();
 }
 
-std::vector< particle_sim > Model::getParticles() const
+const std::vector< particle_sim >& Model::getParticles() const
 {
     return _boost ? _points : _particles;
 }
