@@ -102,20 +102,14 @@ double Model::getFrameIndex() const
 
 void Model::_computeBoundingSphere()
 {
-    arr< Normalizer< float >> minmax( 3 );
-    const auto& particles = getParticles();
-    for( size_t i = 0; i < particles.size(); ++i )
-    {
-        minmax[0].collect( particles[i].x );
-        minmax[1].collect( particles[i].y );
-        minmax[2].collect( particles[i].z );
-    }
+    BoundingBox bbox;
+    bbox.Compute( getParticles( ));
 
-    const seq::Vector3f minExtend( minmax[0].minv, minmax[1].minv, minmax[2].minv );
-    const seq::Vector3f maxExtend( minmax[0].maxv, minmax[1].maxv, minmax[2].maxv );
+    const seq::Vector3f minExtend( bbox.minX, bbox.minY, bbox.minZ );
+    const seq::Vector3f maxExtend( bbox.maxX, bbox.maxY, bbox.maxZ );
 
     _boundingSphere.set_sub_vector< 3, 0 >( (minExtend + maxExtend) / 2.f );
-    _boundingSphere.w() = minExtend.distance( maxExtend ) / 2.f;
+    _boundingSphere.w() = minExtend.distance( maxExtend );
 }
 
 }

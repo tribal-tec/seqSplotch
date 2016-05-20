@@ -52,7 +52,7 @@ ViewData::ViewData( seq::View& view, Model* model )
     , _useBlur( false )
     , _view( view )
 {
-    view.setModelUnit( EQ_MM *10.);
+    view.setModelUnit( EQ_MM * 10.f );
     setModelMatrix( _initialModelMatrix );
 }
 

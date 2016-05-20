@@ -143,29 +143,38 @@ bool Renderer::_createBuffers()
 
 void Renderer::_fillBuffers( Model& model )
 {
-    auto particles = model.getParticles();
+    const auto& allParticles = model.getParticles();
+
+    std::vector< particle_sim >  filteredParticles;
+    filteredParticles.reserve( allParticles.size( ));
 
     // Generate colour in same way splotch does (Add brightness here):
-    for( size_t i = 0; i < particles.size(); ++i )
+    for( size_t i = 0; i < allParticles.size(); ++i )
     {
-        if (!model.getColourIsVec()[particles[i].type])
-            particles[i].e = model.getColorMaps()[particles[i].type].getVal_const(particles[i].e.r) * particles[i].I;
+        const auto& particle = allParticles[i];
+        if( !particle.active )
+            continue;
+
+        filteredParticles.push_back( particle );
+        auto& newParticle = *filteredParticles.rbegin();
+        if (!model.getColourIsVec()[particle.type])
+            newParticle.e = model.getColorMaps()[particle.type].getVal_const(particle.e.r) * particle.I;
         else
-            particles[i].e *= particles[i].I;
+            newParticle.e *= particle.I;
     }
 
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, _posSSBO ));
     EQ_GL_CALL( glBufferData( GL_SHADER_STORAGE_BUFFER,
-                              sizeof(seq::Vector4f) * particles.size(), 0, GL_STATIC_DRAW ));
+                              sizeof(seq::Vector4f) * filteredParticles.size(), 0, GL_STATIC_DRAW ));
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 ));
 
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, _colorSSBO ));
     EQ_GL_CALL( glBufferData( GL_SHADER_STORAGE_BUFFER,
-                              sizeof(seq::Vector4f) * particles.size(), 0, GL_STATIC_DRAW ));
+                              sizeof(seq::Vector4f) * filteredParticles.size(), 0, GL_STATIC_DRAW ));
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 ));
 
-    std::vector< uint32_t > indices( particles.size() * 6 );
-    for (size_t i = 0, j = 0; i < particles.size(); ++i)
+    std::vector< uint32_t > indices( filteredParticles.size() * 6 );
+    for (size_t i = 0, j = 0; i < filteredParticles.size(); ++i)
     {
         size_t index = i << 2;
         indices[j++] = index;
@@ -187,10 +196,10 @@ void Renderer::_fillBuffers( Model& model )
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, _colorSSBO ));
     seq::Vector4f* color = reinterpret_cast< seq::Vector4f* >( glMapBuffer( GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY ));
 
-    for( size_t i = 0; i < particles.size(); ++i )
+    for( size_t i = 0; i < filteredParticles.size(); ++i )
     {
-        pos[i] = seq::Vector4f( particles[i].x, particles[i].y, particles[i].z, 1.0f );
-        color[i] = seq::Vector4f( particles[i].e.r, particles[i].e.g, particles[i].e.b, 1.0f );
+        pos[i] = seq::Vector4f( filteredParticles[i].x, filteredParticles[i].y, filteredParticles[i].z, 1.0f );
+        color[i] = seq::Vector4f( filteredParticles[i].e.r, filteredParticles[i].e.g, filteredParticles[i].e.b, 1.0f );
     }
 
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, _posSSBO ));
@@ -204,6 +213,13 @@ void Renderer::_fillBuffers( Model& model )
 
 void Renderer::_updateModel( Model& model )
 {
+    const eq::PixelViewport& pvp = getPixelViewport();
+    const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
+    paramfile& params = model.getParams();
+    params.setParam( "xres", pvp.w );
+    params.setParam( "yres", pvp.h );
+    params.setParam( "fov", int(viewData->getFOV( )));
+
     if( _modelFrameIndex == model.getFrameIndex( ))
         return;
 
@@ -216,16 +232,11 @@ void Renderer::_cpuRender( Model& model )
     const int width = getPixelViewport().w;
     const int height = getPixelViewport().h;
 
-    paramfile& params = model.getParams();
-    params.setParam( "xres", width );
-    params.setParam( "yres", height );
-    const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
-    params.setParam( "fov", viewData->getFOV( ));
-
     arr2< COLOUR > pic( width, height );
     seq::Vector3f eye, lookAt, up;
     getModelMatrix().getLookAt( eye, lookAt, up );
     auto particles = model.getParticles();
+    paramfile& params = model.getParams();
 
 #ifdef CUDA
     cuda_rendering( 0, 1, pic, particles,
@@ -260,19 +271,19 @@ void Renderer::_cpuRender( Model& model )
     }
 
     const double gamma = params.find< double >("pic_gamma", 1.0 );
-    const double brighntess = params.find< double >("pic_brighness", 0.0 );
+    const double brightness = params.find< double >("pic_brighness", 0.0 );
     const double contrast = params.find< double >("pic_contrast", 1.0 );
 
-    if( gamma != 1.0 || brighntess != 0.0 || contrast != 1.0 )
+    if( gamma != 1.0 || brightness != 0.0 || contrast != 1.0 )
     {
 #pragma omp parallel for
         for( tsize i = 0; i < pic.size1(); ++i )
         {
             for( tsize j = 0; j < pic.size2(); ++j )
             {
-                pic[i][j].r = contrast * pow((double)pic[i][j].r,gamma) + brighntess;
-                pic[i][j].g = contrast * pow((double)pic[i][j].g,gamma) + brighntess;
-                pic[i][j].b = contrast * pow((double)pic[i][j].b,gamma) + brighntess;
+                pic[i][j].r = contrast * pow((double)pic[i][j].r,gamma) + brightness;
+                pic[i][j].g = contrast * pow((double)pic[i][j].g,gamma) + brightness;
+                pic[i][j].b = contrast * pow((double)pic[i][j].b,gamma) + brightness;
             }
        }
     }
@@ -296,7 +307,7 @@ void Renderer::_gpuRender( Model& model, const bool blurOn )
     _fboBlur1->resize( pvp.w, pvp.h );
     _fboBlur2->resize( pvp.w, pvp.h );
 
-    float brightnessMod = 1.0;
+    float brightnessMod = 8.0;
     float saturation = 1.0;
     float contrast   = 1.0;
     float particleSize = 0.6;
