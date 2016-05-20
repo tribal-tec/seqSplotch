@@ -54,7 +54,7 @@ public:
     float getBrightness() const;
     const std::vector<bool>& getColourIsVec() const;
 
-    double getFrameIndex() const;
+    size_t getFrameIndex() const;
 
 private:
     void _computeBoundingSphere();
@@ -65,18 +65,13 @@ private:
     std::vector< particle_sim > _points;
     std::vector< COLOURMAP > _colorMaps;
     vec3 _cameraPosition;
-    vec3 _centerPosition;
     vec3 _lookAt;
-    vec3 _sky;
-    std::string _outfile;
+    vec3 _up;
     bool _boost;
     float _brightness;
-
     seq::Vector4f _boundingSphere;
-
-    // gpu only
     std::vector<bool> _colourIsVec;
-    float _radialMod;
+    size_t _currentFrame;
 };
 
 }

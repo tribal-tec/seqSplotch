@@ -55,7 +55,8 @@ Renderer::Renderer( seq::Application& app )
     , _posSSBO( 0 )
     , _colorSSBO( 0 )
     , _indices( 0 )
-    , _modelFrameIndex( std::numeric_limits< double >::infinity( ))
+    , _modelFrameIndex( std::numeric_limits< size_t >::max( ))
+    , _numParticles( 0 )
 {}
 
 bool Renderer::init( co::Object* initData )
@@ -163,18 +164,20 @@ void Renderer::_fillBuffers( Model& model )
             newParticle.e *= particle.I;
     }
 
+    _numParticles = filteredParticles.size();
+
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, _posSSBO ));
     EQ_GL_CALL( glBufferData( GL_SHADER_STORAGE_BUFFER,
-                              sizeof(seq::Vector4f) * filteredParticles.size(), 0, GL_STATIC_DRAW ));
+                              sizeof(seq::Vector4f) * _numParticles, 0, GL_STATIC_DRAW ));
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 ));
 
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, _colorSSBO ));
     EQ_GL_CALL( glBufferData( GL_SHADER_STORAGE_BUFFER,
-                              sizeof(seq::Vector4f) * filteredParticles.size(), 0, GL_STATIC_DRAW ));
+                              sizeof(seq::Vector4f) * _numParticles, 0, GL_STATIC_DRAW ));
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 ));
 
-    std::vector< uint32_t > indices( filteredParticles.size() * 6 );
-    for (size_t i = 0, j = 0; i < filteredParticles.size(); ++i)
+    std::vector< uint32_t > indices( _numParticles * 6 );
+    for (size_t i = 0, j = 0; i < _numParticles; ++i)
     {
         size_t index = i << 2;
         indices[j++] = index;
@@ -196,7 +199,7 @@ void Renderer::_fillBuffers( Model& model )
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, _colorSSBO ));
     seq::Vector4f* color = reinterpret_cast< seq::Vector4f* >( glMapBuffer( GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY ));
 
-    for( size_t i = 0; i < filteredParticles.size(); ++i )
+    for( size_t i = 0; i < _numParticles; ++i )
     {
         pos[i] = seq::Vector4f( filteredParticles[i].x, filteredParticles[i].y, filteredParticles[i].z, 1.0f );
         color[i] = seq::Vector4f( filteredParticles[i].e.r, filteredParticles[i].e.g, filteredParticles[i].e.b, 1.0f );
@@ -300,7 +303,7 @@ void Renderer::_cpuRender( Model& model )
     glDrawPixels( width, height, GL_RGB, GL_FLOAT, _pixels.getData( ));
 }
 
-void Renderer::_gpuRender( Model& model, const bool blurOn )
+void Renderer::_gpuRender( const bool blurOn )
 {
     const eq::PixelViewport& pvp = getPixelViewport();
     _fbo->resize( pvp.w, pvp.h );
@@ -353,7 +356,7 @@ void Renderer::_gpuRender( Model& model, const bool blurOn )
             EQ_GL_CALL( glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 1, _posSSBO ));
             EQ_GL_CALL( glBindBufferBase( GL_SHADER_STORAGE_BUFFER, 2, _colorSSBO ));
             EQ_GL_CALL( glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, _indices ));
-            EQ_GL_CALL( glDrawElements( GL_TRIANGLES, model.getParticles().size() * 6, GL_UNSIGNED_INT, 0 ));
+            EQ_GL_CALL( glDrawElements( GL_TRIANGLES, _numParticles * 6, GL_UNSIGNED_INT, 0 ));
             EQ_GL_CALL( glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 ));
         }
 
@@ -493,7 +496,7 @@ void Renderer::draw( co::Object* /*frameDataObj*/ )
     if( viewData->useCPURendering( ))
         _cpuRender( model );
     else
-        _gpuRender( model, viewData->useBlur( ));
+        _gpuRender( viewData->useBlur( ));
 }
 
 }

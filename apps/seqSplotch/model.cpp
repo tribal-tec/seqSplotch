@@ -34,14 +34,13 @@ namespace seqSplotch
 Model::Model( const servus::URI& uri )
     : _params( std::to_string( uri ), false )
     , _sceneMaker( _params )
+    , _currentFrame( std::numeric_limits< size_t >::max( ))
 {
     get_colourmaps( _params, _colorMaps );
     _boost = _params.find< bool >( "boost", false );
-    _radialMod = _params.find< double >( "pv_radial_mod", 1.f );
 
     const unsigned numTypes = _params.find<int>( "ptypes", 1 );
-
-    for(unsigned i = 0; i < numTypes; i++)
+    for( unsigned i = 0; i < numTypes; ++i )
         _colourIsVec.push_back( _params.find<bool>("color_is_vector" + dataToString(i), 0 ));
 
     loadNextFrame();
@@ -51,7 +50,16 @@ void Model::loadNextFrame()
 {
     _particles.clear();
     _points.clear();
-    _sceneMaker.getNextScene( _particles, _points, _cameraPosition, _centerPosition, _lookAt, _sky, _outfile );
+    std::string outfile;
+    vec3 centerPos;
+    const bool isEOF = !_sceneMaker.getNextScene( _particles, _points,
+                                                 _cameraPosition, centerPos,
+                                                 _lookAt, _up, outfile );
+    if( isEOF )
+        _currentFrame = std::numeric_limits< size_t >::max();
+    else
+        _currentFrame = _currentFrame == std::numeric_limits< size_t >::max() ? 0 : _currentFrame+1;
+
     _brightness = _boost ? float(_particles.size())/float(_points.size()) : 1.0;
 
     _computeBoundingSphere();
@@ -66,7 +74,7 @@ seq::Matrix4f Model::getModelMatrix() const
 {
     const seq::Vector3f eye( _cameraPosition.x, _cameraPosition.y, _cameraPosition.z );
     const seq::Vector3f center( _lookAt.x, _lookAt.y, _lookAt.z );
-    const seq::Vector3f up( _sky.x, _sky.y, _sky.z );
+    const seq::Vector3f up( _up.x, _up.y, _up.z );
     return seq::Matrix4f( eye, center, up );
 }
 
@@ -95,9 +103,9 @@ const std::vector<bool>& Model::getColourIsVec() const
     return _colourIsVec;
 }
 
-double Model::getFrameIndex() const
+size_t Model::getFrameIndex() const
 {
-    return _params.find< double >( "fidx" );
+    return _currentFrame;
 }
 
 void Model::_computeBoundingSphere()

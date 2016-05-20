@@ -52,7 +52,7 @@ protected:
 
 private:
     void _cpuRender( Model& model );
-    void _gpuRender( Model& model, bool blurOn );
+    void _gpuRender( bool blurOn );
     void _updateModel( Model& model );
 
     bool _loadShaders();
@@ -70,7 +70,8 @@ private:
     GLuint _colorSSBO;
     GLuint _indices;
 
-    double _modelFrameIndex;
+    size_t _modelFrameIndex;
+    size_t _numParticles;
 };
 
 }
