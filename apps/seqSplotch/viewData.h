@@ -45,12 +45,14 @@ public:
 
     bool handleEvent( const eq::ConfigEvent* event_ ) final;
     bool useCPURendering() const;
+    bool useBlur() const;
     float getFOV() const;
 
 private:
     enum DirtyBits
     {
-        DIRTY_CPURENDERING = seq::ViewData::DIRTY_CUSTOM << 0
+        DIRTY_CPURENDERING = seq::ViewData::DIRTY_CUSTOM << 0,
+        DIRTY_BLUR = seq::ViewData::DIRTY_CUSTOM << 1
     };
 
     void serialize( co::DataOStream& os, const uint64_t dirtyBits ) final;
@@ -59,6 +61,7 @@ private:
     const seq::Matrix4f _initialModelMatrix;
     Model* _model;
     bool _useCPURendering;
+    bool _useBlur;
     seq::View& _view;
 };
 

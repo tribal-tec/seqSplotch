@@ -33,7 +33,6 @@
 
 #include "types.h"
 
-/** The Sequel polygonal rendering example. */
 namespace seqSplotch
 {
 

@@ -39,6 +39,7 @@ ViewData::ViewData( seq::View& view )
     : seq::ViewData( view )
     , _model( nullptr )
     , _useCPURendering( true )
+    , _useBlur( false )
     , _view( view )
 {
 }
@@ -48,6 +49,7 @@ ViewData::ViewData( seq::View& view, Model* model )
     , _initialModelMatrix( model->getModelMatrix( ))
     , _model( model )
     , _useCPURendering( false )
+    , _useBlur( false )
     , _view( view )
 {
     view.setModelUnit( EQ_MM *10.);
@@ -69,6 +71,11 @@ bool ViewData::useCPURendering() const
     return _useCPURendering;
 }
 
+bool ViewData::useBlur() const
+{
+    return _useBlur;
+}
+
 bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
 {
     const eq::Event& event = event_->data;
@@ -87,6 +94,10 @@ bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
             _useCPURendering = !_useCPURendering;
             setDirty( DIRTY_CPURENDERING );
             return true;
+        case 'b':
+            _useBlur = !_useBlur;
+            setDirty( DIRTY_BLUR );
+            return true;
         }
     }
     return seq::ViewData::handleEvent( event_ );
@@ -97,6 +108,8 @@ void ViewData::serialize( co::DataOStream& os, const uint64_t dirtyBits )
     seq::ViewData::serialize( os, dirtyBits );
     if( dirtyBits & DIRTY_CPURENDERING )
         os << _useCPURendering;
+    if( dirtyBits & DIRTY_BLUR )
+        os << _useBlur;
 }
 
 void ViewData::deserialize( co::DataIStream& is, const uint64_t dirtyBits )
@@ -104,7 +117,8 @@ void ViewData::deserialize( co::DataIStream& is, const uint64_t dirtyBits )
     seq::ViewData::deserialize( is, dirtyBits );
     if( dirtyBits & DIRTY_CPURENDERING )
         is >> _useCPURendering;
-
+    if( dirtyBits & DIRTY_BLUR )
+        is >> _useBlur;
 }
 
 }

@@ -47,13 +47,18 @@ public:
     std::vector< particle_sim > getParticles() const;
 
     seq::Matrix4f getModelMatrix() const;
+    const seq::Vector4f& getBoundingSphere() const;
 
     paramfile& getParams();
     std::vector< COLOURMAP >& getColorMaps();
     float getBrightness() const;
     const std::vector<bool>& getColourIsVec() const;
 
+    double getFrameIndex() const;
+
 private:
+    void _computeBoundingSphere();
+
     paramfile _params;
     sceneMaker _sceneMaker;
     std::vector< particle_sim > _particles;
@@ -66,6 +71,8 @@ private:
     std::string _outfile;
     bool _boost;
     float _brightness;
+
+    seq::Vector4f _boundingSphere;
 
     // gpu only
     std::vector<bool> _colourIsVec;

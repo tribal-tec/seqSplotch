@@ -28,7 +28,6 @@
 
 #include "model.h"
 
-/** The Sequel polygonal rendering example. */
 namespace seqSplotch
 {
 
@@ -54,6 +53,8 @@ void Model::loadNextFrame()
     _points.clear();
     _sceneMaker.getNextScene( _particles, _points, _cameraPosition, _centerPosition, _lookAt, _sky, _outfile );
     _brightness = _boost ? float(_particles.size())/float(_points.size()) : 1.0;
+
+    _computeBoundingSphere();
 }
 
 std::vector< particle_sim > Model::getParticles() const
@@ -67,6 +68,11 @@ seq::Matrix4f Model::getModelMatrix() const
     const seq::Vector3f center( _lookAt.x, _lookAt.y, _lookAt.z );
     const seq::Vector3f up( _sky.x, _sky.y, _sky.z );
     return seq::Matrix4f( eye, center, up );
+}
+
+const seq::Vector4f& Model::getBoundingSphere() const
+{
+    return _boundingSphere;
 }
 
 paramfile& Model::getParams()
@@ -87,6 +93,29 @@ float Model::getBrightness() const
 const std::vector<bool>& Model::getColourIsVec() const
 {
     return _colourIsVec;
+}
+
+double Model::getFrameIndex() const
+{
+    return _params.find< double >( "fidx" );
+}
+
+void Model::_computeBoundingSphere()
+{
+    arr< Normalizer< float >> minmax( 3 );
+    const auto& particles = getParticles();
+    for( size_t i = 0; i < particles.size(); ++i )
+    {
+        minmax[0].collect( particles[i].x );
+        minmax[1].collect( particles[i].y );
+        minmax[2].collect( particles[i].z );
+    }
+
+    const seq::Vector3f minExtend( minmax[0].minv, minmax[1].minv, minmax[2].minv );
+    const seq::Vector3f maxExtend( minmax[0].maxv, minmax[1].maxv, minmax[2].maxv );
+
+    _boundingSphere.set_sub_vector< 3, 0 >( (minExtend + maxExtend) / 2.f );
+    _boundingSphere.w() = minExtend.distance( maxExtend ) / 2.f;
 }
 
 }

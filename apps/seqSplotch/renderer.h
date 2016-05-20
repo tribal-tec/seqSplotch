@@ -44,8 +44,6 @@ public:
 
 protected:
     bool init( co::Object* initData ) final;
-    bool initContext( co::Object* initData ) final;
-    bool exitContext() final;
     bool exit() final;
     void draw( co::Object* frameData ) final;
 
@@ -53,15 +51,13 @@ protected:
     void destroyViewData( seq::ViewData* viewData ) final;
 
 private:
-    void cpuRender( Model& model );
-    void oldGpuRender( Model& model );
-    void gpuRender( Model& model );
-    //State* _state;
+    void _cpuRender( Model& model );
+    void _gpuRender( Model& model, bool blurOn );
+    void _updateModel( Model& model );
 
     bool _loadShaders();
-    bool _genFBO( Model& model );
-    bool _genVBO();
-    bool _genTexture();
+    bool _createBuffers();
+    void _fillBuffers( Model& model );
 
     lunchbox::Buffer< float > _pixels;
 
@@ -73,6 +69,8 @@ private:
     GLuint _posSSBO;
     GLuint _colorSSBO;
     GLuint _indices;
+
+    double _modelFrameIndex;
 };
 
 }
