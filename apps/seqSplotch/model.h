@@ -44,7 +44,8 @@ public:
 
     void loadNextFrame();
 
-    const std::vector< particle_sim >& getParticles() const;
+    typedef std::vector< particle_sim > Particles;
+    const Particles& getParticles() const;
 
     seq::Matrix4f getModelMatrix() const;
     const seq::Vector4f& getBoundingSphere() const;
@@ -61,8 +62,9 @@ private:
 
     paramfile _params;
     sceneMaker _sceneMaker;
-    std::vector< particle_sim > _particles;
-    std::vector< particle_sim > _points;
+
+    std::vector< Particles > _particles;
+    std::vector< Particles > _points;
     std::vector< COLOURMAP > _colorMaps;
     vec3 _cameraPosition;
     vec3 _lookAt;
@@ -72,6 +74,7 @@ private:
     seq::Vector4f _boundingSphere;
     std::vector<bool> _colourIsVec;
     size_t _currentFrame;
+    bool _haveAll;
 };
 
 }

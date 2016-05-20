@@ -35,6 +35,7 @@ Model::Model( const servus::URI& uri )
     : _params( std::to_string( uri ), false )
     , _sceneMaker( _params )
     , _currentFrame( std::numeric_limits< size_t >::max( ))
+    , _haveAll( false )
 {
     get_colourmaps( _params, _colorMaps );
     _boost = _params.find< bool >( "boost", false );
@@ -48,26 +49,37 @@ Model::Model( const servus::URI& uri )
 
 void Model::loadNextFrame()
 {
-    _particles.clear();
-    _points.clear();
-    std::string outfile;
-    vec3 centerPos;
-    const bool isEOF = !_sceneMaker.getNextScene( _particles, _points,
-                                                 _cameraPosition, centerPos,
-                                                 _lookAt, _up, outfile );
+    _currentFrame = _currentFrame == std::numeric_limits< size_t >::max()
+            ? 0 : _currentFrame+1;
+    bool isEOF = _currentFrame >= _particles.size();
+
+    if( !_haveAll )
+    {
+        std::string outfile;
+        vec3 centerPos;
+        Particles particles, points;
+        isEOF = !_sceneMaker.getNextScene( particles, points, _cameraPosition,
+                                           centerPos, _lookAt, _up, outfile );
+        if( !isEOF )
+        {
+            _particles.emplace_back( particles );
+            _points.emplace_back( points );
+        }
+        else
+            _haveAll = true;
+    }
+
     if( isEOF )
-        _currentFrame = std::numeric_limits< size_t >::max();
-    else
-        _currentFrame = _currentFrame == std::numeric_limits< size_t >::max() ? 0 : _currentFrame+1;
+        _currentFrame = 0;
 
     _brightness = _boost ? float(_particles.size())/float(_points.size()) : 1.0;
 
     _computeBoundingSphere();
 }
 
-const std::vector< particle_sim >& Model::getParticles() const
+const Model::Particles& Model::getParticles() const
 {
-    return _boost ? _points : _particles;
+    return _boost ? _points[_currentFrame] : _particles[_currentFrame];
 }
 
 seq::Matrix4f Model::getModelMatrix() const
