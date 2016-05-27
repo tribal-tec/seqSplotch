@@ -47,6 +47,7 @@ public:
     bool useCPURendering() const;
     bool useBlur() const;
     float getFOV() const;
+    float getEyeSeparation() const;
 
 private:
     enum DirtyBits
@@ -62,6 +63,7 @@ private:
     Model* _model;
     bool _useCPURendering;
     bool _useBlur;
+    float _eyeSeparation;
     seq::View& _view;
 };
 

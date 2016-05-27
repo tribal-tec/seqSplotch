@@ -42,8 +42,8 @@ public:
     Application();
     ~Application();
 
-    bool init( const int argc, char** argv );
-    bool run();
+    bool init( int argc, char** argv, co::Object* initData ) final;
+    bool run( co::Object* frameData ) final;
     bool exit() final;
 
     seq::Renderer* createRenderer()  final;

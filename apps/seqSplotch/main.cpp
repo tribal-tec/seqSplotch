@@ -32,7 +32,7 @@ int main( const int argc, char** argv )
 {
     lunchbox::RefPtr< seqSplotch::Application > app( new seqSplotch::Application );
 
-    if( app->init( argc, argv ) && app->run() && app->exit( ))
+    if( app->init( argc, argv, nullptr ) && app->run( nullptr ) && app->exit( ))
         return EXIT_SUCCESS;
 
     return EXIT_FAILURE;

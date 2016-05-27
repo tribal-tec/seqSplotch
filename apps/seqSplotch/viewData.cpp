@@ -50,10 +50,18 @@ ViewData::ViewData( seq::View& view, Model* model )
     , _model( model )
     , _useCPURendering( false )
     , _useBlur( false )
+    , _eyeSeparation( 0.f )
     , _view( view )
 {
     view.setModelUnit( EQ_MM * 10.f );
     setModelMatrix( _initialModelMatrix );
+
+    const auto& observer = _view.getObserver();
+    if( !observer )
+        return;
+    const auto& leftEye = observer->getEyePosition( eq::EYE_LEFT );
+    const auto& rightEye = observer->getEyePosition( eq::EYE_RIGHT );
+    _eyeSeparation = rightEye.x() - leftEye.x();
 }
 
 ViewData::~ViewData()
@@ -64,6 +72,11 @@ float ViewData::getFOV() const
     eq::Projection proj;
     proj = _view.getWall();
     return proj.fov[0];
+}
+
+float ViewData::getEyeSeparation() const
+{
+    return _eyeSeparation;
 }
 
 bool ViewData::useCPURendering() const
@@ -106,6 +119,8 @@ bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
 void ViewData::serialize( co::DataOStream& os, const uint64_t dirtyBits )
 {
     seq::ViewData::serialize( os, dirtyBits );
+    if( dirtyBits == DIRTY_ALL )
+        os << _eyeSeparation;
     if( dirtyBits & DIRTY_CPURENDERING )
         os << _useCPURendering;
     if( dirtyBits & DIRTY_BLUR )
@@ -115,6 +130,8 @@ void ViewData::serialize( co::DataOStream& os, const uint64_t dirtyBits )
 void ViewData::deserialize( co::DataIStream& is, const uint64_t dirtyBits )
 {
     seq::ViewData::deserialize( is, dirtyBits );
+    if( dirtyBits == DIRTY_ALL )
+        is >> _eyeSeparation;
     if( dirtyBits & DIRTY_CPURENDERING )
         is >> _useCPURendering;
     if( dirtyBits & DIRTY_BLUR )

@@ -41,18 +41,30 @@ Application::Application()
 Application::~Application()
 {}
 
-bool Application::init( const int argc, char** argv )
+bool Application::init( const int argc, char** argv, co::Object* initData )
 {
-    const servus::URI uri( argc > 1 ? std::string( argv[1] )
-                   : std::string( "/home/nachbaur/dev/viz.stable/splotch/configs/snap092.par" ));
-    _model.reset( new Model( uri ));
+    std::string paramfile;
+    for( int i = 1; i < argc; ++i )
+    {
+        if( strcmp( argv[i], "--paramfile" ) == 0 )
+        {
+            ++i;
+            paramfile = std::string( argv[i] );
+            break;
+        }
+    }
 
-    return seq::Application::init( argc, argv, nullptr );
+    if( paramfile.empty( ))
+        paramfile = "/home/nachbaur/dev/viz.stable/splotch/configs/snap092.par";
+
+    _model.reset( new Model( servus::URI( paramfile )));
+
+    return seq::Application::init( argc, argv, initData );
 }
 
-bool Application::run()
+bool Application::run( co::Object* frameData )
 {
-    return seq::Application::run( nullptr );
+    return seq::Application::run( frameData );
 }
 
 bool Application::exit()

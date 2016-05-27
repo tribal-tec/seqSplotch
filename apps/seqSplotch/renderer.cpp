@@ -153,7 +153,7 @@ void Renderer::_fillBuffers( Model& model )
     for( size_t i = 0; i < allParticles.size(); ++i )
     {
         const auto& particle = allParticles[i];
-        if( !particle.active )
+        if( particle.r <= std::numeric_limits< float >::epsilon( ))
             continue;
 
         filteredParticles.push_back( particle );
@@ -232,26 +232,48 @@ void Renderer::_updateModel( Model& model )
 
 void Renderer::_cpuRender( Model& model )
 {
-    const int width = getPixelViewport().w;
-    const int height = getPixelViewport().h;
+    const eq::PixelViewport& pvp = getPixelViewport();
+    const int width = pvp.w;
+    const int height = pvp.h;
 
     arr2< COLOUR > pic( width, height );
-    seq::Vector3f eye, lookAt, up;
-    getModelMatrix().getLookAt( eye, lookAt, up );
+    seq::Vector3f origin, lookAt, up;
+    getModelMatrix().getLookAt( origin, lookAt, up );
     auto particles = model.getParticles();
     paramfile& params = model.getParams();
+
+    seq::Vector3f eye = origin;
+    if( getRenderContext().eye != eq::EYE_CYCLOP )
+    {
+        const seq::Vector3f view = lookAt - origin;
+        const seq::Vector3f right = vmml::cross( view, up );
+
+        const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
+        const float dist2 = viewData->getEyeSeparation() * view.length() * .5f;
+
+        switch( getRenderContext().eye )
+        {
+        case eq::EYE_LEFT:
+            eye = origin - right / right.length()  * dist2;
+            break;
+        case eq::EYE_RIGHT:
+            eye = origin + right / right.length()  * dist2;
+            break;
+        default:;
+        }
+    }
 
 #ifdef CUDA
     cuda_rendering( 0, 1, pic, particles,
                     vec3( eye.x(), eye.y(), eye.z()),
-                    vec3( eye.x(), eye.y(), eye.z()),
+                    vec3( origin.x(), origin.y(), origin.z()),
                     vec3( lookAt.x(), lookAt.y(), lookAt.z()),
                     vec3( up.x(), up.y(), up.z()),
                     model.amap, model.b_brightness, params );
 #else
     host_rendering( params, particles, pic,
                     vec3( eye.x(), eye.y(), eye.z()),
-                    vec3( eye.x(), eye.y(), eye.z()),
+                    vec3( origin.x(), origin.y(), origin.z()),
                     vec3( lookAt.x(), lookAt.y(), lookAt.z()),
                     vec3( up.x(), up.y(), up.z()),
                     model.getColorMaps(), model.getBrightness(), particles.size( ));
@@ -299,7 +321,7 @@ void Renderer::_cpuRender( Model& model )
             memcpy( &_pixels[k], &pic[i][j], 3 * sizeof( float ));
     }
 
-    glWindowPos2i( 0, 0 );
+    glWindowPos2i( pvp.x, pvp.y );
     glDrawPixels( width, height, GL_RGB, GL_FLOAT, _pixels.getData( ));
 }
 
@@ -336,6 +358,7 @@ void Renderer::_gpuRender( const bool blurOn )
         _fbo->bind();
 
         EQ_GL_CALL( glViewport( pvp.x, pvp.y, pvp.w, pvp.h ));
+        EQ_GL_CALL( glScissor( pvp.x, pvp.y, pvp.w, pvp.h ));
         EQ_GL_CALL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ));
 
         const seq::Matrix4f projectionMatrix = getFrustum().computePerspectiveMatrix();
