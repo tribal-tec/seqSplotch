@@ -1,8 +1,8 @@
 #version 430
 #extension GL_ARB_shader_storage_buffer_object : require
 
-uniform mat4 ciProjectionMatrix;
-uniform mat4 ciModelView;
+uniform mat4 projection;
+uniform mat4 modelview;
 uniform float brightnessMod;
 uniform	float saturation;
 uniform	float contrast;
@@ -57,9 +57,9 @@ void main()
     //map vertex ID to quad vertex
     vec2 quadPos = vec2( ( ( gl_VertexID - 1 ) & 2 ) >> 1, ( gl_VertexID & 2 ) >> 1 );
 
-    vec4 particlePosEye = ciModelView * particlePos;
+    vec4 particlePosEye = modelview * particlePos;
     vec4 vertexPosEye = particlePosEye + vec4( ( quadPos * 2.0 - 1.0 ) * iparticleSize, 0, 0 );
 
     Out.texCoord = quadPos;
-    gl_Position = ciProjectionMatrix * vertexPosEye;
+    gl_Position = projection * vertexPosEye;
 }

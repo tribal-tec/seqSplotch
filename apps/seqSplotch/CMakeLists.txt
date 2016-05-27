@@ -4,7 +4,7 @@ include(StringifyShaders)
 
 stringify_shaders(
   blur.frag
-  blur_pass.vert
+  blur.vert
   particles.frag
   particles.vert
 )

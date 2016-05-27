@@ -40,7 +40,7 @@
 #include <particles.frag.h>
 #include <particles.vert.h>
 #include <blur.frag.h>
-#include <blur_pass.vert.h>
+#include <blur.vert.h>
 
 namespace seqSplotch
 {
@@ -55,6 +55,7 @@ Renderer::Renderer( seq::Application& app )
     , _posSSBO( 0 )
     , _colorSSBO( 0 )
     , _indices( 0 )
+    , _rectVBO( 0 )
     , _modelFrameIndex( std::numeric_limits< size_t >::max( ))
     , _numParticles( 0 )
 {}
@@ -84,6 +85,7 @@ bool Renderer::exit()
     om.deleteBuffer( &_posSSBO );
     om.deleteBuffer( &_colorSSBO );
     om.deleteBuffer( &_indices );
+    om.deleteBuffer( &_rectVBO );
 
     return seq::Renderer::exit();
 }
@@ -100,12 +102,17 @@ bool Renderer::_loadShaders()
     }
 
     _blurShader = om.newProgram( &_blurShader );
-    if( !seq::linkProgram( om.glewGetContext(), _blurShader, blur_pass_vert,
+    if( !seq::linkProgram( om.glewGetContext(), _blurShader, blur_vert,
                            blur_frag ))
     {
         om.deleteProgram( &_blurShader );
         return false;
     }
+
+    EQ_GL_CALL( glUseProgram( _blurShader ));
+    const GLint loc = glGetUniformLocation( _blurShader, "tex0" );
+    EQ_GL_CALL( glUniform1i( loc, 0 ));
+    EQ_GL_CALL( glUseProgram( 0 ));
 
     return true;
 }
@@ -138,6 +145,7 @@ bool Renderer::_createBuffers()
     _posSSBO = om.newBuffer( &_posSSBO );
     _colorSSBO = om.newBuffer( &_colorSSBO );
     _indices = om.newBuffer( &_indices );
+    _rectVBO = om.newBuffer( &_rectVBO );
 
     return true;
 }
@@ -212,6 +220,42 @@ void Renderer::_fillBuffers( Model& model )
     EQ_GL_CALL( glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ));
 
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 ));
+
+
+    // for blur
+    EQ_GL_CALL( glBindBuffer( GL_ARRAY_BUFFER, _rectVBO ));
+    EQ_GL_CALL( glBufferData( GL_ARRAY_BUFFER, sizeof(float) * 8, 0,
+                              GL_STATIC_DRAW ));
+    EQ_GL_CALL( glBindBuffer( GL_ARRAY_BUFFER, 0 ));
+}
+
+void Renderer::_drawBlurPass( eq::util::FrameBufferObject* targetFBO,
+                              eq::util::Texture* inputTexture,
+                              const seq::Vector2f& sampleOffset )
+{
+    targetFBO->bind();
+    inputTexture->bind();
+
+    EQ_GL_CALL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ));
+
+    const GLint loc = glGetUniformLocation( _blurShader, "sampleOffset" );
+    EQ_GL_CALL( glUniform2fv( loc, 1, &sampleOffset.array[0] ));
+
+    EQ_GL_CALL( glDrawArrays( GL_TRIANGLE_STRIP, 0, 4 ));
+
+    EQ_GL_CALL( glBindTexture( inputTexture->getTarget(), 0 ));
+    targetFBO->unbind();
+}
+
+void Renderer::_blit( eq::util::FrameBufferObject* fbo )
+{
+    const eq::PixelViewport& pvp = getPixelViewport();
+    fbo->bind( GL_READ_FRAMEBUFFER_EXT );
+    bindDrawFrameBuffer();
+    EQ_GL_CALL( glBlitFramebuffer( pvp.x, pvp.y, pvp.w, pvp.h,
+                                   pvp.x, pvp.y, pvp.w, pvp.h,
+                                   GL_COLOR_BUFFER_BIT, GL_NEAREST ));
+    fbo->unbind();
 }
 
 void Renderer::_updateModel( Model& model )
@@ -337,8 +381,7 @@ void Renderer::_gpuRender( const bool blurOn )
     float contrast   = 1.0;
     float particleSize = 0.6;
     float nParticleSize = particleSize * 10;
-
-    float blurStrength = 0.13f;
+    float blurStrength = 0.1f;
     float blurColorModifier = 1.2f;
 
     EQ_GL_CALL( glUseProgram( _particleShader ));
@@ -365,10 +408,10 @@ void Renderer::_gpuRender( const bool blurOn )
         seq::Matrix4f modelViewMatrix = getViewMatrix() * getModelMatrix();
         modelViewMatrix( 3, 2 ) = -modelViewMatrix( 3, 2 );
 
-        loc = glGetUniformLocation( _particleShader, "ciProjectionMatrix" );
+        loc = glGetUniformLocation( _particleShader, "projection" );
         EQ_GL_CALL( glUniformMatrix4fv( loc, 1, GL_FALSE, projectionMatrix.data( )));
 
-        loc = glGetUniformLocation( _particleShader, "ciModelView" );
+        loc = glGetUniformLocation( _particleShader, "modelview" );
         EQ_GL_CALL( glUniformMatrix4fv( loc, 1, GL_FALSE, modelViewMatrix.data( )));
 
         EQ_GL_CALL( glEnable( GL_BLEND ));
@@ -389,110 +432,46 @@ void Renderer::_gpuRender( const bool blurOn )
         _fbo->unbind();
     }
 
-    if( blurOn )
+    if( !blurOn )
     {
-        {
-            _fboBlur1->bind();
-            EQ_GL_CALL( glUseProgram( _blurShader ));
-            _fbo->getColorTextures()[0]->bind();
-
-            EQ_GL_CALL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ));
-
-            loc = glGetUniformLocation( _blurShader, "tex0" );
-            EQ_GL_CALL( glUniform1i( loc, 0 ));
-
-            loc = glGetUniformLocation( _blurShader, "sampleOffset" );
-            const seq::Vector2f sampleOffset( blurStrength / _fboBlur1->getWidth(), 0.0f );
-            EQ_GL_CALL( glUniform2fv( loc, 2, &sampleOffset.array[0] ));
-
-            loc = glGetUniformLocation( _blurShader, "colorModifier" );
-            EQ_GL_CALL( glUniform1f( loc, blurColorModifier ));
-
-            EQ_GL_CALL( glDisable( GL_LIGHTING ));
-            EQ_GL_CALL( glEnable( GL_TEXTURE_RECTANGLE_ARB ));
-
-            const seq::Vector4f coords( pvp.x, pvp.getXEnd(), pvp.y, pvp.getYEnd( ));
-            glBegin( GL_QUADS );
-                glTexCoord2f( 0.0f, 0.0f );
-                glVertex3f( coords[0], coords[2], 0.0f );
-
-                glTexCoord2f( float( pvp.w ), 0.0f );
-                glVertex3f( coords[1], coords[2], 0.0f );
-
-                glTexCoord2f( float( pvp.w ), float( pvp.h ));
-                glVertex3f( coords[1], coords[3], 0.0f );
-
-                glTexCoord2f( 0.0f, float( pvp.h ));
-                glVertex3f( coords[0], coords[3], 0.0f );
-            glEnd();
-
-            EQ_GL_CALL( glBindTexture( _fbo->getColorTextures()[0]->getTarget(), 0 ));
-            EQ_GL_CALL( glUseProgram( 0 ));
-            _fboBlur1->unbind();
-        }
-
-        {
-            //gl::ScopedViewport scpVp(0, 0, mFboBlur2->getWidth(), mFboBlur2->getHeight());
-            _fboBlur2->bind();
-            EQ_GL_CALL( glUseProgram( _blurShader ));
-            _fboBlur1->getColorTextures()[0]->bind();
-
-            EQ_GL_CALL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ));
-
-            loc = glGetUniformLocation( _blurShader, "tex0" );
-            EQ_GL_CALL( glUniform1i( loc, 0 ));
-
-            loc = glGetUniformLocation( _blurShader, "sampleOffset" );
-            const seq::Vector2f sampleOffset( 0.0f, blurStrength / _fboBlur2->getHeight() );
-            EQ_GL_CALL( glUniform2fv( loc, 2, &sampleOffset.array[0] ));
-
-            loc = glGetUniformLocation( _blurShader, "colorModifier" );
-            EQ_GL_CALL( glUniform1f( loc, blurColorModifier ));
-
-            EQ_GL_CALL( glDisable( GL_LIGHTING ));
-            EQ_GL_CALL( glEnable( GL_TEXTURE_RECTANGLE_ARB ));
-
-            const seq::Vector4f coords( pvp.x, pvp.getXEnd(), pvp.y, pvp.getYEnd( ));
-            glBegin( GL_QUADS );
-                glTexCoord2f( 0.0f, 0.0f );
-                glVertex3f( coords[0], coords[2], 0.0f );
-
-                glTexCoord2f( float( pvp.w ), 0.0f );
-                glVertex3f( coords[1], coords[2], 0.0f );
-
-                glTexCoord2f( float( pvp.w ), float( pvp.h ));
-                glVertex3f( coords[1], coords[3], 0.0f );
-
-                glTexCoord2f( 0.0f, float( pvp.h ));
-                glVertex3f( coords[0], coords[3], 0.0f );
-            glEnd();
-
-            EQ_GL_CALL( glBindTexture( _fboBlur1->getColorTextures()[0]->getTarget(), 0 ));
-            EQ_GL_CALL( glUseProgram( 0 ));
-            _fboBlur2->unbind();
-        }
+        _blit( _fbo );
+        return;
     }
 
-    //gl::setMatrices(mCam);
-    _fbo->bind( GL_READ_FRAMEBUFFER_EXT );
-    bindDrawFrameBuffer();
-    EQ_GL_CALL( glBlitFramebuffer( pvp.x, pvp.y, pvp.w, pvp.h,
-                                   pvp.x, pvp.y, pvp.w, pvp.h,
-                                   GL_COLOR_BUFFER_BIT, GL_NEAREST ));
-    _fbo->unbind();
+    EQ_GL_CALL( glUseProgram( _blurShader ));
+    loc = glGetUniformLocation( _blurShader, "projection" );
+    const eq::Matrix4f& proj = eq::Frustumf( pvp.x, pvp.getXEnd(),
+                                             pvp.y, pvp.getYEnd(),
+                                             -1.0f, 1.0f ).computeOrthoMatrix();
+    EQ_GL_CALL( glUniformMatrix4fv( loc, 1, GL_FALSE, proj.data( )));
 
-    if( blurOn )
-    {
-        EQ_GL_CALL( glEnable( GL_BLEND ));
-        EQ_GL_CALL( glBlendFunc( GL_SRC_ALPHA, GL_ONE ));
-        _fboBlur2->bind( GL_READ_FRAMEBUFFER_EXT );
-        bindDrawFrameBuffer();
-        EQ_GL_CALL( glBlitFramebuffer( pvp.x, pvp.y, pvp.w, pvp.h,
-                                       pvp.x, pvp.y, pvp.w, pvp.h,
-                                       GL_COLOR_BUFFER_BIT, GL_NEAREST ));
-        _fboBlur2->unbind();
-        EQ_GL_CALL( glDisable( GL_BLEND ));
-    }
+    loc = glGetUniformLocation( _blurShader, "colorModifier" );
+    EQ_GL_CALL( glUniform1f( loc, blurColorModifier ));
+
+    EQ_GL_CALL( glBindAttribLocation( _blurShader, 0, "position" ));
+    EQ_GL_CALL( glEnableVertexAttribArray( 0 ));
+
+    const GLfloat rect[8] = { float( pvp.getXEnd( )), float( pvp.y ),
+                              float( pvp.x ), float( pvp.y ),
+                              float( pvp.getXEnd( )), float( pvp.getYEnd( )),
+                              float( pvp.x ), float( pvp.getYEnd( )) };
+
+    EQ_GL_CALL( glBindBuffer( GL_ARRAY_BUFFER, _rectVBO ));
+    EQ_GL_CALL( glBufferSubData( GL_ARRAY_BUFFER, 0, sizeof(float)*8, rect ));
+    EQ_GL_CALL( glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0 ));
+
+    _drawBlurPass( _fboBlur1, _fbo->getColorTextures()[0],
+                   seq::Vector2f( blurStrength, 0.0f ));
+    _drawBlurPass( _fboBlur2, _fboBlur1->getColorTextures()[0],
+                   seq::Vector2f( 0.0f, blurStrength ));
+
+    EQ_GL_CALL( glUseProgram( 0 ));
+    EQ_GL_CALL( glBindBuffer( GL_ARRAY_BUFFER, 0 ));
+
+    EQ_GL_CALL( glEnable( GL_BLEND ));
+    EQ_GL_CALL( glBlendFunc( GL_SRC_ALPHA, GL_ONE ));
+    _blit( _fboBlur2 );
+    EQ_GL_CALL( glDisable( GL_BLEND ));
 }
 
 seq::ViewData* Renderer::createViewData( seq::View& view )

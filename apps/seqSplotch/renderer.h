@@ -59,6 +59,11 @@ private:
     bool _createBuffers();
     void _fillBuffers( Model& model );
 
+    void _drawBlurPass( eq::util::FrameBufferObject* targetFBO,
+                        eq::util::Texture* inputTexture,
+                        const seq::Vector2f& sampleOffset );
+    void _blit( eq::util::FrameBufferObject* fbo );
+
     lunchbox::Buffer< float > _pixels;
 
     GLuint _particleShader;
@@ -69,6 +74,8 @@ private:
     GLuint _posSSBO;
     GLuint _colorSSBO;
     GLuint _indices;
+
+    GLuint _rectVBO;
 
     size_t _modelFrameIndex;
     size_t _numParticles;
