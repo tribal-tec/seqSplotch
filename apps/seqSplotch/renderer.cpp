@@ -475,7 +475,7 @@ void Renderer::_gpuRender( const bool blurOn )
 
     //gl::setMatrices(mCam);
     _fbo->bind( GL_READ_FRAMEBUFFER_EXT );
-    EQ_GL_CALL( glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, 0 ));
+    bindDrawFrameBuffer();
     EQ_GL_CALL( glBlitFramebuffer( pvp.x, pvp.y, pvp.w, pvp.h,
                                    pvp.x, pvp.y, pvp.w, pvp.h,
                                    GL_COLOR_BUFFER_BIT, GL_NEAREST ));
@@ -486,7 +486,7 @@ void Renderer::_gpuRender( const bool blurOn )
         EQ_GL_CALL( glEnable( GL_BLEND ));
         EQ_GL_CALL( glBlendFunc( GL_SRC_ALPHA, GL_ONE ));
         _fboBlur2->bind( GL_READ_FRAMEBUFFER_EXT );
-        EQ_GL_CALL( glBindFramebufferEXT( GL_DRAW_FRAMEBUFFER_EXT, 0 ));
+        bindDrawFrameBuffer();
         EQ_GL_CALL( glBlitFramebuffer( pvp.x, pvp.y, pvp.w, pvp.h,
                                        pvp.x, pvp.y, pvp.w, pvp.h,
                                        GL_COLOR_BUFFER_BIT, GL_NEAREST ));
