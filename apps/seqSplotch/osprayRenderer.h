@@ -44,7 +44,8 @@ public:
     ~OSPRayRenderer();
 
     void update( Model& model );
-    void render( Model& model, const seq::Vector2i& size, const seq::Matrix4f& matrix );
+    void render( Model& model, const seq::Vector2i& size,
+                 const seq::Matrix4f& matrix, const float fovy );
 
 private:
     OSPModel       _model;

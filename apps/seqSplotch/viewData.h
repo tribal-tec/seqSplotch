@@ -57,7 +57,7 @@ public:
     bool handleEvent( const eq::ConfigEvent* event_ ) final;
     RendererType getRenderer() const;
     bool useBlur() const;
-    float getFOV() const;
+    seq::Vector2f getFOV() const;
     float getEyeSeparation() const;
 
 private:

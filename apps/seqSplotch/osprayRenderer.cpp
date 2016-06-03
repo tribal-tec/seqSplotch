@@ -130,7 +130,7 @@ void OSPRayRenderer::update( Model& model )
     ospCommit(_renderer);
 }
 
-void OSPRayRenderer::render( Model& /*model*/, const seq::Vector2i& size, const seq::Matrix4f& matrix )
+void OSPRayRenderer::render( Model& /*model*/, const seq::Vector2i& size, const seq::Matrix4f& matrix, const float fovy )
 {
     if( size != _size )
     {
@@ -148,10 +148,11 @@ void OSPRayRenderer::render( Model& /*model*/, const seq::Vector2i& size, const 
 
     seq::Vector3f origin, lookAt, up;
     matrix.getLookAt( origin, lookAt, up );
-    lookAt = lookAt - origin;
+    lookAt = vmml::normalize( lookAt - origin );
     ospSetVec3f( _camera, "pos", reinterpret_cast<osp::vec3f&>(origin) );
     ospSetVec3f( _camera, "dir", reinterpret_cast<osp::vec3f&>(lookAt));
     ospSetVec3f( _camera, "up", reinterpret_cast<osp::vec3f&>(up));
+    ospSetf( _camera, "fovy", fovy );
     ospCommit( _camera );
 
     ospRenderFrame( _fb, _renderer, OSP_FB_COLOR );

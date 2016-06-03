@@ -280,7 +280,7 @@ void Renderer::_updateModel( Model& model )
         paramfile& params = model.getParams();
         params.setParam( "xres", pvp.w );
         params.setParam( "yres", pvp.h );
-        params.setParam( "fov", int(viewData->getFOV( )));
+        params.setParam( "fov", int(viewData->getFOV()[0] ));
         break;
     }
 #ifdef SEQSPLOTCH_USE_OSPRAY
@@ -397,8 +397,10 @@ void Renderer::_osprayRender( Model& model LB_UNUSED )
 {
 #ifdef SEQSPLOTCH_USE_OSPRAY
     const eq::PixelViewport& pvp = getPixelViewport();
+    const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
+
     glWindowPos2i( pvp.x, pvp.y );
-    _osprayRenderer->render( model, seq::Vector2i( pvp.w, pvp.h ), getModelMatrix( ));
+    _osprayRenderer->render( model, seq::Vector2i( pvp.w, pvp.h ), getModelMatrix(), viewData->getFOV()[1]);
 #endif
 }
 

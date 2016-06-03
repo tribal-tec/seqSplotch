@@ -67,11 +67,11 @@ ViewData::ViewData( seq::View& view, Model* model )
 ViewData::~ViewData()
 {}
 
-float ViewData::getFOV() const
+seq::Vector2f ViewData::getFOV() const
 {
     eq::Projection proj;
     proj = _view.getWall();
-    return proj.fov[0];
+    return proj.fov;
 }
 
 float ViewData::getEyeSeparation() const
