@@ -15,9 +15,10 @@ set(SEQSPLOTCH_LICENSE LGPL BSD)
 set(COMMON_PROJECT_DOMAIN ch.epfl.bluebrain)
 include(Common)
 common_find_package(Equalizer REQUIRED)
-if(NOT TARGET splotch)
+if(NOT TARGET splotch) # TODO fix find_package(splotch) for superprojects
   common_find_package(splotch REQUIRED)
 endif()
+common_find_package(OSPRay SYSTEM)
 common_find_package_post()
 
 add_subdirectory(apps)

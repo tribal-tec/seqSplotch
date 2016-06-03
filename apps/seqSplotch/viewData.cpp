@@ -38,7 +38,7 @@ namespace seqSplotch
 ViewData::ViewData( seq::View& view )
     : seq::ViewData( view )
     , _model( nullptr )
-    , _useCPURendering( true )
+    , _renderer( RENDERER_GPU )
     , _useBlur( false )
     , _view( view )
 {
@@ -48,7 +48,7 @@ ViewData::ViewData( seq::View& view, Model* model )
     : seq::ViewData( view )
     , _initialModelMatrix( model->getModelMatrix( ))
     , _model( model )
-    , _useCPURendering( false )
+    , _renderer( RENDERER_GPU )
     , _useBlur( false )
     , _eyeSeparation( 0.f )
     , _view( view )
@@ -79,9 +79,9 @@ float ViewData::getEyeSeparation() const
     return _eyeSeparation;
 }
 
-bool ViewData::useCPURendering() const
+RendererType ViewData::getRenderer() const
 {
-    return _useCPURendering;
+    return _renderer;
 }
 
 bool ViewData::useBlur() const
@@ -104,8 +104,9 @@ bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
             _model->loadNextFrame();
             return true;
         case 'r':
-            _useCPURendering = !_useCPURendering;
-            setDirty( DIRTY_CPURENDERING );
+            _renderer = RendererType((int(_renderer)+1) % RENDERER_LAST);
+            std::cout << "Using renderer " << int(_renderer) << std::endl;
+            setDirty( DIRTY_RENDERER );
             return true;
         case 'b':
             _useBlur = !_useBlur;
@@ -121,8 +122,8 @@ void ViewData::serialize( co::DataOStream& os, const uint64_t dirtyBits )
     seq::ViewData::serialize( os, dirtyBits );
     if( dirtyBits == DIRTY_ALL )
         os << _eyeSeparation;
-    if( dirtyBits & DIRTY_CPURENDERING )
-        os << _useCPURendering;
+    if( dirtyBits & DIRTY_RENDERER )
+        os << _renderer;
     if( dirtyBits & DIRTY_BLUR )
         os << _useBlur;
 }
@@ -132,8 +133,8 @@ void ViewData::deserialize( co::DataIStream& is, const uint64_t dirtyBits )
     seq::ViewData::deserialize( is, dirtyBits );
     if( dirtyBits == DIRTY_ALL )
         is >> _eyeSeparation;
-    if( dirtyBits & DIRTY_CPURENDERING )
-        is >> _useCPURendering;
+    if( dirtyBits & DIRTY_RENDERER )
+        is >> _renderer;
     if( dirtyBits & DIRTY_BLUR )
         is >> _useBlur;
 }

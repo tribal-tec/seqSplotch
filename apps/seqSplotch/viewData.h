@@ -36,6 +36,17 @@
 namespace seqSplotch
 {
 
+enum RendererType
+{
+    RENDERER_GPU,
+    RENDERER_SPLOTCH_OLD,
+    RENDERER_SPLOTCH_NEW,
+#ifdef SEQSPLOTCH_USE_OSPRAY
+    RENDERER_OSPRAY,
+#endif
+    RENDERER_LAST
+};
+
 class ViewData : public seq::ViewData
 {
 public:
@@ -44,7 +55,7 @@ public:
     ~ViewData();
 
     bool handleEvent( const eq::ConfigEvent* event_ ) final;
-    bool useCPURendering() const;
+    RendererType getRenderer() const;
     bool useBlur() const;
     float getFOV() const;
     float getEyeSeparation() const;
@@ -52,7 +63,7 @@ public:
 private:
     enum DirtyBits
     {
-        DIRTY_CPURENDERING = seq::ViewData::DIRTY_CUSTOM << 0,
+        DIRTY_RENDERER = seq::ViewData::DIRTY_CUSTOM << 0,
         DIRTY_BLUR = seq::ViewData::DIRTY_CUSTOM << 1
     };
 
@@ -61,12 +72,18 @@ private:
 
     const seq::Matrix4f _initialModelMatrix;
     Model* _model;
-    bool _useCPURendering;
+    RendererType _renderer;
     bool _useBlur;
     float _eyeSeparation;
     seq::View& _view;
 };
 
+}
+
+namespace lunchbox
+{
+template<> inline void byteswap( seqSplotch::RendererType& value )
+{ byteswap( reinterpret_cast< uint32_t& >( value )); }
 }
 
 #endif

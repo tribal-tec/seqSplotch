@@ -26,6 +26,13 @@ set(SEQSPLOTCH_SOURCES
 )
 
 set(SEQSPLOTCH_LINK_LIBRARIES Sequel splotch)
+
+if(OSPRAY_FOUND)
+    list(APPEND SEQSPLOTCH_HEADERS osprayRenderer.h)
+    list(APPEND SEQSPLOTCH_SOURCES osprayRenderer.cpp)
+    list(APPEND SEQSPLOTCH_LINK_LIBRARIES ${OSPRAY_LIBRARIES})
+endif()
+
 if(TARGET splotchCUDA)
   common_find_package(CUDA)
   set(CUDA_HOST_COMPILER "/usr/bin/gcc")

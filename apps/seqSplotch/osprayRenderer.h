@@ -26,72 +26,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef SEQ_SPLOTCH_RENDERER_H
-#define SEQ_SPLOTCH_RENDERER_H
+#ifndef SEQ_SPLOTCH_OSPRAY_RENDERER_H
+#define SEQ_SPLOTCH_OSPRAY_RENDERER_H
 
-#include "application.h"
+#include <ospray/ospray.h>
 #include <seq/sequel.h>
-#include <eq/gl.h>
-
-#ifdef SEQSPLOTCH_USE_OSPRAY
-#  include "osprayRenderer.h"
-#endif
 
 namespace seqSplotch
 {
 
-class Renderer : public seq::Renderer
+class Model;
+
+class OSPRayRenderer
 {
 public:
-    Renderer( seq::Application& app );
-    virtual ~Renderer() {}
+    OSPRayRenderer();
+    ~OSPRayRenderer();
 
-protected:
-    bool init( co::Object* initData ) final;
-    bool exit() final;
-    void draw( co::Object* frameData ) final;
-
-    seq::ViewData* createViewData( seq::View& view ) final;
-    void destroyViewData( seq::ViewData* viewData ) final;
+    void update( Model& model );
+    void render( Model& model, const seq::Vector2i& size, const seq::Matrix4f& matrix );
 
 private:
-    void _cpuRender( Model& model );
-    void _gpuRender( bool blurOn );
-    void _osprayRender( Model& model );
-    void _updateModel( Model& model );
-    void _updateOspray( Model& model );
+    OSPModel       _model;
+    OSPFrameBuffer _fb;
+    OSPRenderer    _renderer;
+    OSPCamera      _camera;
 
-    bool _loadShaders();
-    bool _createBuffers();
-    void _updateGPUBuffers( Model& model );
-
-    void _drawBlurPass( eq::util::FrameBufferObject* targetFBO,
-                        eq::util::Texture* inputTexture,
-                        const seq::Vector2f& sampleOffset );
-    void _blit( eq::util::FrameBufferObject* fbo );
-
-    lunchbox::Buffer< float > _pixels;
-
-    GLuint _particleShader;
-    GLuint _blurShader;
-    eq::util::FrameBufferObject* _fbo;
-    eq::util::FrameBufferObject* _fboBlur1;
-    eq::util::FrameBufferObject* _fboBlur2;
-    GLuint _posSSBO;
-    GLuint _colorSSBO;
-    GLuint _indices;
-
-    GLuint _rectVBO;
-
-    size_t _modelFrameIndex;
-    size_t _numParticles;
-
-#ifdef SEQSPLOTCH_USE_OSPRAY
-    std::unique_ptr< OSPRayRenderer > _osprayRenderer;
-#endif
+    seq::Vector2i _size;
 };
-
 }
 
-#endif // SEQ_SPLOTCH_RENDERER_H
+#endif
 

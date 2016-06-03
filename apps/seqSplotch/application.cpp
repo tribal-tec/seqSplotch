@@ -32,6 +32,10 @@
 #include "renderer.h"
 #include "viewData.h"
 
+#ifdef SEQSPLOTCH_USE_OSPRAY
+#  include <ospray/ospray.h>
+#endif
+
 namespace seqSplotch
 {
 
@@ -41,7 +45,7 @@ Application::Application()
 Application::~Application()
 {}
 
-bool Application::init( const int argc, char** argv, co::Object* initData )
+bool Application::init( int argc, char** argv, co::Object* initData )
 {
     std::string paramfile;
     for( int i = 1; i < argc; ++i )
@@ -58,6 +62,10 @@ bool Application::init( const int argc, char** argv, co::Object* initData )
         paramfile = "/home/nachbaur/dev/viz.stable/splotch/configs/snap092.par";
 
     _model.reset( new Model( servus::URI( paramfile )));
+
+#ifdef SEQSPLOTCH_USE_OSPRAY
+    ospInit( &argc, const_cast< const char** >( argv ));
+#endif
 
     return seq::Application::init( argc, argv, initData );
 }
