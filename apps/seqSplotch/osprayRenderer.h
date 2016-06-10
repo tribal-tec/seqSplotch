@@ -44,8 +44,8 @@ public:
     ~OSPRayRenderer();
 
     void update( Model& model );
-    void render( Model& model, const seq::Vector2i& size,
-                 const seq::Matrix4f& matrix, const float fovy );
+    bool render( const seq::Vector2i& size, const seq::Matrix4f& matrix,
+                 const float fovy );
 
 private:
     OSPModel       _model;
@@ -54,6 +54,7 @@ private:
     OSPCamera      _camera;
 
     seq::Vector2i _size;
+    size_t _accumStep;
 };
 }
 

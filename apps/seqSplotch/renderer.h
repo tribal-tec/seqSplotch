@@ -57,7 +57,7 @@ protected:
 private:
     void _cpuRender( Model& model );
     void _gpuRender( bool blurOn );
-    void _osprayRender( Model& model );
+    void _osprayRender();
     void _updateModel( Model& model );
     void _updateOspray( Model& model );
 

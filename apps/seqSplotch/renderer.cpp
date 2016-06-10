@@ -393,14 +393,15 @@ void Renderer::_cpuRender( Model& model )
     glDrawPixels( width, height, GL_RGB, GL_FLOAT, _pixels.getData( ));
 }
 
-void Renderer::_osprayRender( Model& model LB_UNUSED )
+void Renderer::_osprayRender()
 {
 #ifdef SEQSPLOTCH_USE_OSPRAY
     const eq::PixelViewport& pvp = getPixelViewport();
     const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
 
     glWindowPos2i( pvp.x, pvp.y );
-    _osprayRenderer->render( model, seq::Vector2i( pvp.w, pvp.h ), getModelMatrix(), viewData->getFOV()[1]);
+    if( _osprayRenderer->render( seq::Vector2i( pvp.w, pvp.h ), getModelMatrix(), viewData->getFOV()[1]))
+        requestRedraw();
 #endif
 }
 
@@ -555,7 +556,7 @@ void Renderer::draw( co::Object* /*frameDataObj*/ )
     }
 #ifdef SEQSPLOTCH_USE_OSPRAY
     case RENDERER_OSPRAY:
-        _osprayRender( model );
+        _osprayRender();
         return;
 #endif
     case RENDERER_LAST:
