@@ -83,7 +83,8 @@ private:
 
     GLuint _rectVBO;
 
-    size_t _modelFrameIndex;
+    size_t _gpuModelFrameIndex;
+    size_t _osprayModelFrameIndex;
     size_t _numParticles;
 
 #ifdef SEQSPLOTCH_USE_OSPRAY

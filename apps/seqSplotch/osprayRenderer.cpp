@@ -60,7 +60,7 @@ void OSPRayRenderer::update( Model& model )
         OSPLight ospLight = ospNewLight( _renderer, "DirectionalLight" );
         ospSetString(ospLight, "name", "sun" );
         ospSet3f( ospLight, "color", 1, 1, 1 );
-        ospSet1f( ospLight, "intensity", 80.f );
+        ospSet1f( ospLight, "intensity", 50.f );
         const vec3f defaultDirLight_direction( .3, -1, -.2 );
         ospSet3fv( ospLight, "direction", &defaultDirLight_direction.x );
         ospCommit( ospLight );
@@ -102,7 +102,7 @@ void OSPRayRenderer::update( Model& model )
         {
             OSPMaterial mat = ospNewMaterial( _renderer, "OBJMaterial" );
             ospSet3fv( mat, "Kd", &i.e.r );
-            ospSet1f( mat, "d", 0.5 );
+            ospSet1f( mat, "d", 0.2 );
             ospCommit( mat );
             materials.push_back( mat );
             matIdx = types.size();

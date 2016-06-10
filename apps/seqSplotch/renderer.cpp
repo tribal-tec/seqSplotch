@@ -60,7 +60,8 @@ Renderer::Renderer( seq::Application& app )
     , _colorSSBO( 0 )
     , _indices( 0 )
     , _rectVBO( 0 )
-    , _modelFrameIndex( std::numeric_limits< size_t >::max( ))
+    , _gpuModelFrameIndex( std::numeric_limits< size_t >::max( ))
+    , _osprayModelFrameIndex( std::numeric_limits< size_t >::max( ))
     , _numParticles( 0 )
 {}
 
@@ -266,12 +267,12 @@ void Renderer::_updateModel( Model& model )
 {
     const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
 
-    const bool modelDirty = _modelFrameIndex != model.getFrameIndex();
     switch( viewData->getRenderer( ))
     {
     case RENDERER_GPU:
-        if( modelDirty )
+        if( _gpuModelFrameIndex != model.getFrameIndex( ))
             _updateGPUBuffers( model );
+        _gpuModelFrameIndex = model.getFrameIndex();
         break;
     case RENDERER_SPLOTCH_OLD:
     case RENDERER_SPLOTCH_NEW:
@@ -285,8 +286,9 @@ void Renderer::_updateModel( Model& model )
     }
 #ifdef SEQSPLOTCH_USE_OSPRAY
     case RENDERER_OSPRAY:
-        if( modelDirty || !_osprayRenderer )
+        if( _osprayModelFrameIndex != model.getFrameIndex( ) || !_osprayRenderer )
             _updateOspray( model );
+        _osprayModelFrameIndex = model.getFrameIndex();
         break;
 #endif
     case RENDERER_LAST:
@@ -294,8 +296,6 @@ void Renderer::_updateModel( Model& model )
         std::cerr << "Unknown renderer " << int(viewData->getRenderer( )) << std::endl;
         break;
     }
-
-    _modelFrameIndex = model.getFrameIndex();
 }
 
 void Renderer::_cpuRender( Model& model )
