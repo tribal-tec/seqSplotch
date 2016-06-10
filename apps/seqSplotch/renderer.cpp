@@ -155,8 +155,15 @@ bool Renderer::_createBuffers()
     return true;
 }
 
-void Renderer::_updateGPUBuffers( Model& model )
+void Renderer::_updateGPUBuffers()
 {
+    Application& application = static_cast< Application& >( getApplication( ));
+    Model& model = application.getModel();
+    if( _gpuModelFrameIndex == model.getFrameIndex( ))
+        return;
+
+    _gpuModelFrameIndex = model.getFrameIndex();
+
     const auto& allParticles = model.getParticles();
 
     std::vector< particle_sim >  filteredParticles;
@@ -263,43 +270,11 @@ void Renderer::_blit( eq::util::FrameBufferObject* fbo )
     fbo->unbind();
 }
 
-void Renderer::_updateModel( Model& model )
+void Renderer::_splotchRender()
 {
-    const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
+    Application& application = static_cast< Application& >( getApplication( ));
+    Model& model = application.getModel();
 
-    switch( viewData->getRenderer( ))
-    {
-    case RENDERER_GPU:
-        if( _gpuModelFrameIndex != model.getFrameIndex( ))
-            _updateGPUBuffers( model );
-        _gpuModelFrameIndex = model.getFrameIndex();
-        break;
-    case RENDERER_SPLOTCH_OLD:
-    case RENDERER_SPLOTCH_NEW:
-    {
-        const eq::PixelViewport& pvp = getPixelViewport();
-        paramfile& params = model.getParams();
-        params.setParam( "xres", pvp.w );
-        params.setParam( "yres", pvp.h );
-        params.setParam( "fov", int(viewData->getFOV()[0] ));
-        break;
-    }
-#ifdef SEQSPLOTCH_USE_OSPRAY
-    case RENDERER_OSPRAY:
-        if( _osprayModelFrameIndex != model.getFrameIndex( ) || !_osprayRenderer )
-            _updateOspray( model );
-        _osprayModelFrameIndex = model.getFrameIndex();
-        break;
-#endif
-    case RENDERER_LAST:
-    default:
-        std::cerr << "Unknown renderer " << int(viewData->getRenderer( )) << std::endl;
-        break;
-    }
-}
-
-void Renderer::_cpuRender( Model& model )
-{
     const eq::PixelViewport& pvp = getPixelViewport();
     const int width = pvp.w;
     const int height = pvp.h;
@@ -396,6 +371,17 @@ void Renderer::_cpuRender( Model& model )
 void Renderer::_osprayRender()
 {
 #ifdef SEQSPLOTCH_USE_OSPRAY
+    if( !_osprayRenderer )
+        _osprayRenderer.reset( new OSPRayRenderer );
+
+    Application& application = static_cast< Application& >( getApplication( ));
+    Model& model = application.getModel();
+    if( _osprayModelFrameIndex != model.getFrameIndex( ))
+    {
+        _osprayModelFrameIndex = model.getFrameIndex();
+        _osprayRenderer->update( model );
+    }
+
     const eq::PixelViewport& pvp = getPixelViewport();
     const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
 
@@ -405,17 +391,10 @@ void Renderer::_osprayRender()
 #endif
 }
 
-void Renderer::_updateOspray( Model& model LB_UNUSED )
+void Renderer::_gpuRender()
 {
-#ifdef SEQSPLOTCH_USE_OSPRAY
-    if( !_osprayRenderer )
-        _osprayRenderer.reset( new OSPRayRenderer );
-    _osprayRenderer->update( model );
-#endif
-}
+    _updateGPUBuffers();
 
-void Renderer::_gpuRender( const bool blurOn )
-{
     const eq::PixelViewport& pvp = getPixelViewport();
     _fbo->resize( pvp.w, pvp.h );
     _fboBlur1->resize( pvp.w, pvp.h );
@@ -477,7 +456,8 @@ void Renderer::_gpuRender( const bool blurOn )
         _fbo->unbind();
     }
 
-    if( !blurOn )
+    const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
+    if( !viewData->useBlur( ))
     {
         _blit( _fbo );
         return;
@@ -535,34 +515,36 @@ void Renderer::draw( co::Object* /*frameDataObj*/ )
     Application& application = static_cast< Application& >( getApplication( ));
 
     Model& model = application.getModel();
-    _updateModel( model );
-
     updateNearFar( model.getBoundingSphere( ));
     applyRenderContext(); // set up OpenGL State
 
     switch( viewData->getRenderer( ))
     {
     case RENDERER_GPU:
-        _gpuRender( viewData->useBlur( ));
-        return;
+        _gpuRender();
+        break;
     case RENDERER_SPLOTCH_OLD:
     case RENDERER_SPLOTCH_NEW:
     {
+        const eq::PixelViewport& pvp = getPixelViewport();
         paramfile& params = model.getParams();
+        params.setParam( "xres", pvp.w );
+        params.setParam( "yres", pvp.h );
+        params.setParam( "fov", int(viewData->getFOV()[0] ));
         params.setParam( "new_renderer",
                          viewData->getRenderer() == RENDERER_SPLOTCH_NEW );
-        _cpuRender( model );
-        return;
+        _splotchRender();
+        break;
     }
 #ifdef SEQSPLOTCH_USE_OSPRAY
     case RENDERER_OSPRAY:
         _osprayRender();
-        return;
+        break;
 #endif
     case RENDERER_LAST:
     default:
         std::cerr << "Unknown renderer " << int(viewData->getRenderer( )) << std::endl;
-        return;
+        break;
     }
 }
 

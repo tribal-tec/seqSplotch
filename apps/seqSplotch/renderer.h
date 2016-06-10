@@ -55,15 +55,13 @@ protected:
     void destroyViewData( seq::ViewData* viewData ) final;
 
 private:
-    void _cpuRender( Model& model );
-    void _gpuRender( bool blurOn );
+    void _splotchRender();
+    void _gpuRender();
     void _osprayRender();
-    void _updateModel( Model& model );
-    void _updateOspray( Model& model );
 
     bool _loadShaders();
     bool _createBuffers();
-    void _updateGPUBuffers( Model& model );
+    void _updateGPUBuffers();
 
     void _drawBlurPass( eq::util::FrameBufferObject* targetFBO,
                         eq::util::Texture* inputTexture,
