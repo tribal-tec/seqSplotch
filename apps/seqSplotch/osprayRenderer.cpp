@@ -90,26 +90,28 @@ void OSPRayRenderer::update( Model& model )
     atoms.clear();
     atoms.reserve( model.getParticles().size( ));
     std::vector< OSPMaterial > materials;
-    std::vector< int > types;
+    materials.reserve( model.getParticles().size( ));
+    std::vector< seq::Vector4f > colors;
+    colors.reserve( model.getParticles().size( ));
     for( const auto& i : model.getParticles( ))
     {
         if( i.r <= std::numeric_limits< float >::epsilon( ))
             continue;
 
-        auto it = std::find( types.begin(), types.end(), int(i.r) );
+        auto it = std::find( colors.begin(), colors.end(), seq::Vector4f( i.e.r, i.e.g, i.e.b, i.I ));
         int matIdx;
-        if( it == types.end( ))
+        if( it == colors.end( ))
         {
             OSPMaterial mat = ospNewMaterial( _renderer, "OBJMaterial" );
             ospSet3fv( mat, "Kd", &i.e.r );
-            ospSet1f( mat, "d", 0.2 );
+            ospSet1f( mat, "d", 0.2 * i.I );
             ospCommit( mat );
             materials.push_back( mat );
-            matIdx = types.size();
-            types.push_back( int(i.r) );
+            matIdx = colors.size();
+            colors.push_back( seq::Vector4f( i.e.r, i.e.g, i.e.b, i.I ));
         }
         else
-            matIdx = *it - 1;
+            matIdx = std::distance( colors.begin(), it );
         atoms.emplace_back( Atom { vec3f( i.x, i.y, i.z ), i.r, matIdx } );
     }
     OSPData materialData = ospNewData( materials.size(), OSP_OBJECT,

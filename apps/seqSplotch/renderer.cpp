@@ -405,7 +405,6 @@ void Renderer::_gpuRender()
     float contrast   = 1.0;
     float particleSize = 0.6;
     float nParticleSize = particleSize * 10;
-    float blurStrength = 0.1f;
     float blurColorModifier = 1.2f;
 
     EQ_GL_CALL( glUseProgram( _particleShader ));
@@ -486,9 +485,9 @@ void Renderer::_gpuRender()
     EQ_GL_CALL( glVertexAttribPointer( 0, 2, GL_FLOAT, GL_FALSE, 0, (void*)0 ));
 
     _drawBlurPass( _fboBlur1, _fbo->getColorTextures()[0],
-                   seq::Vector2f( blurStrength, 0.0f ));
+                   seq::Vector2f( viewData->getBlurStrength(), 0.0f ));
     _drawBlurPass( _fboBlur2, _fboBlur1->getColorTextures()[0],
-                   seq::Vector2f( 0.0f, blurStrength ));
+                   seq::Vector2f( 0.0f, viewData->getBlurStrength( )));
 
     EQ_GL_CALL( glUseProgram( 0 ));
     EQ_GL_CALL( glBindBuffer( GL_ARRAY_BUFFER, 0 ));

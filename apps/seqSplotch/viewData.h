@@ -57,6 +57,7 @@ public:
     bool handleEvent( const eq::ConfigEvent* event_ ) final;
     RendererType getRenderer() const;
     bool useBlur() const;
+    float getBlurStrength() const;
     seq::Vector2f getFOV() const;
     float getEyeSeparation() const;
 
@@ -64,7 +65,8 @@ private:
     enum DirtyBits
     {
         DIRTY_RENDERER = seq::ViewData::DIRTY_CUSTOM << 0,
-        DIRTY_BLUR = seq::ViewData::DIRTY_CUSTOM << 1
+        DIRTY_BLUR = seq::ViewData::DIRTY_CUSTOM << 1,
+        DIRTY_BLUR_STRENGTH = seq::ViewData::DIRTY_CUSTOM << 2
     };
 
     void serialize( co::DataOStream& os, const uint64_t dirtyBits ) final;
@@ -74,6 +76,7 @@ private:
     Model* _model;
     RendererType _renderer;
     bool _useBlur;
+    float _blurStrength;
     float _eyeSeparation;
     seq::View& _view;
 };

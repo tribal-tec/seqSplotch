@@ -40,6 +40,7 @@ ViewData::ViewData( seq::View& view )
     , _model( nullptr )
     , _renderer( RENDERER_GPU )
     , _useBlur( false )
+    , _blurStrength( 0.1f )
     , _view( view )
 {
 }
@@ -50,6 +51,7 @@ ViewData::ViewData( seq::View& view, Model* model )
     , _model( model )
     , _renderer( RENDERER_GPU )
     , _useBlur( false )
+    , _blurStrength( 0.1f )
     , _eyeSeparation( 0.f )
     , _view( view )
 {
@@ -89,6 +91,11 @@ bool ViewData::useBlur() const
     return _useBlur;
 }
 
+float ViewData::getBlurStrength() const
+{
+    return _blurStrength;
+}
+
 bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
 {
     const eq::Event& event = event_->data;
@@ -112,6 +119,14 @@ bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
             _useBlur = !_useBlur;
             setDirty( DIRTY_BLUR );
             return true;
+        case '+':
+            _blurStrength += 0.05f;
+            setDirty( DIRTY_BLUR_STRENGTH );
+            return true;
+        case '-':
+            _blurStrength -= 0.05f;
+            setDirty( DIRTY_BLUR_STRENGTH );
+            return true;
         }
     }
     return seq::ViewData::handleEvent( event_ );
@@ -126,6 +141,8 @@ void ViewData::serialize( co::DataOStream& os, const uint64_t dirtyBits )
         os << _renderer;
     if( dirtyBits & DIRTY_BLUR )
         os << _useBlur;
+    if( dirtyBits & DIRTY_BLUR_STRENGTH )
+        os << _blurStrength;
 }
 
 void ViewData::deserialize( co::DataIStream& is, const uint64_t dirtyBits )
@@ -137,6 +154,8 @@ void ViewData::deserialize( co::DataIStream& is, const uint64_t dirtyBits )
         is >> _renderer;
     if( dirtyBits & DIRTY_BLUR )
         is >> _useBlur;
+    if( dirtyBits & DIRTY_BLUR_STRENGTH )
+        is >> _blurStrength;
 }
 
 }
