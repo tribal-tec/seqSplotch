@@ -48,6 +48,7 @@ public:
 
     bool handleEvent( const eq::ConfigEvent* event_ ) final;
     seq::Vector2f getFOV() const;
+    Camera getCamera() const;
 
 private:
     void notifyChanged() final;

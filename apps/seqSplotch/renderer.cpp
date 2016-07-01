@@ -383,7 +383,7 @@ void Renderer::_osprayRender()
     const eq::PixelViewport& pvp = getPixelViewport();
     const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
 
-    _osprayRenderer->updateCamera( viewData->useOrtho( ));
+    _osprayRenderer->updateCamera( viewData->getCamera( ));
 
     glWindowPos2i( pvp.x, pvp.y );
     if( _osprayRenderer->render( seq::Vector2i( pvp.w, pvp.h ), getModelMatrix(), viewData->getFOV()[1]))

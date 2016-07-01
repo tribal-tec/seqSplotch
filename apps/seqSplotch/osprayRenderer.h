@@ -32,10 +32,10 @@
 #include <ospray/ospray.h>
 #include <seq/sequel.h>
 
+#include "types.h"
+
 namespace seqSplotch
 {
-
-class Model;
 
 class OSPRayRenderer
 {
@@ -44,7 +44,7 @@ public:
     ~OSPRayRenderer();
 
     void update( Model& model );
-    void updateCamera( bool ortho );
+    void updateCamera( Camera mode );
     bool render( const seq::Vector2i& size, const seq::Matrix4f& matrix,
                  const float fovy );
 
@@ -56,7 +56,7 @@ private:
 
     seq::Vector2i _size;
     size_t _accumStep;
-    bool _ortho;
+    Camera _camMode;
 };
 }
 

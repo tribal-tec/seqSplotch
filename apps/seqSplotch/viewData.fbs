@@ -20,4 +20,5 @@ table ViewData
   eyeSeparation:float = 0.1;
   renderer:RendererType = 0;
   ortho:bool = false;
+  stereo:bool = false;
 }

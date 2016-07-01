@@ -35,6 +35,13 @@ namespace seqSplotch
 class Model;
 class ViewData;
 
+enum Camera
+{
+    CAM_PERSPECTIVE,
+    CAM_ORTHO,
+    CAM_STEREO
+};
+
 }
 
 #endif

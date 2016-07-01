@@ -69,6 +69,13 @@ seq::Vector2f ViewData::getFOV() const
     return proj.fov;
 }
 
+Camera ViewData::getCamera() const
+{
+    if( _view.getMode() == eq::View::MODE_STEREO )
+        return CAM_STEREO;
+    return getOrtho() ? CAM_ORTHO : CAM_PERSPECTIVE;
+}
+
 bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
 {
     const eq::Event& event = event_->data;
@@ -103,6 +110,14 @@ bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
 void ViewData::notifyChanged()
 {
     ::seq::ViewData::setOrtho( ViewData::getOrtho( ));
+    _view.changeMode( getStereo() ? eq::View::MODE_STEREO
+                                  : eq::View::MODE_MONO );
+
+    const auto& observer = _view.getObserver();
+    if( !observer )
+        return;
+    observer->setEyePosition( eq::EYE_LEFT, seq::Vector3f( -getEyeSeparation()/2.f, 0.f , 0 ));
+    observer->setEyePosition( eq::EYE_RIGHT, seq::Vector3f( getEyeSeparation()/2.f, 0.f , 0 ));
 }
 
 }

@@ -41,7 +41,7 @@ OSPRayRenderer::OSPRayRenderer()
     , _renderer( nullptr )
     , _camera( nullptr )
     , _accumStep( 0 )
-    , _ortho( false )
+    , _camMode( CAM_PERSPECTIVE )
 {
 }
 
@@ -138,17 +138,31 @@ void OSPRayRenderer::update( Model& model )
     _accumStep = 0;
 }
 
-void OSPRayRenderer::updateCamera( const bool ortho )
+void OSPRayRenderer::updateCamera( const Camera mode )
 {
-    if( ortho == _ortho && _camera )
+    if( mode == _camMode && _camera )
         return;
 
-    _ortho = ortho;
+    _camMode = mode;
 
     if( _camera )
         ospRelease( _camera );
 
-    _camera = ospNewCamera( ortho ? "orthographic" : "perspective" );
+    switch( mode )
+    {
+    case CAM_PERSPECTIVE:
+        _camera = ospNewCamera( "perspective" );
+        break;
+    case CAM_ORTHO:
+        _camera = ospNewCamera( "orthographic" );
+        break;
+    case CAM_STEREO:
+        //_camera = ospNewCamera( "stereo" );
+        LBWARN << "Stereo for OSPray not supported" << std::endl;
+        _camera = ospNewCamera( "perspective" );
+        break;
+    }
+
     ospCommit( _camera );
     ospSetObject( _renderer, "camera", _camera );
     ospCommit( _renderer );
@@ -187,10 +201,18 @@ bool OSPRayRenderer::render( const seq::Vector2i& size,
     ospSetVec3f( _camera, "dir", reinterpret_cast<osp::vec3f&>(lookAt));
     ospSetVec3f( _camera, "up", reinterpret_cast<osp::vec3f&>(up));
     ospSetf( _camera, "aspect", float(size[0]) / float(size[1]) );
-    if( _ortho )
-        ospSetf( _camera, "height", size[1]*15);
-    else
+
+    switch( _camMode )
+    {
+    case CAM_PERSPECTIVE:
+    case CAM_STEREO:
         ospSetf( _camera, "fovy", fovy );
+        break;
+    case CAM_ORTHO:
+        ospSetf( _camera, "height", size[1]*15);
+        break;
+    }
+
     ospCommit( _camera );
 
     ospRenderFrame( _fb, _renderer, OSP_FB_COLOR | OSP_FB_ACCUM );
