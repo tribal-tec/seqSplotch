@@ -19,6 +19,8 @@ if(NOT TARGET splotch) # TODO fix find_package(splotch) for superprojects
   common_find_package(splotch REQUIRED)
 endif()
 common_find_package(OSPRay SYSTEM)
+common_find_package(ZeroBuf REQUIRED)
+common_find_package(ZeroEQ)
 common_find_package_post()
 
 add_subdirectory(apps)

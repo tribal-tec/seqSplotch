@@ -152,6 +152,11 @@ bool Renderer::_createBuffers()
     _indices = om.newBuffer( &_indices );
     _rectVBO = om.newBuffer( &_rectVBO );
 
+    EQ_GL_CALL( glBindBuffer( GL_ARRAY_BUFFER, _rectVBO ));
+    EQ_GL_CALL( glBufferData( GL_ARRAY_BUFFER, sizeof(float) * 8, 0,
+                              GL_STATIC_DRAW ));
+    EQ_GL_CALL( glBindBuffer( GL_ARRAY_BUFFER, 0 ));
+
     return true;
 }
 
@@ -232,13 +237,6 @@ void Renderer::_updateGPUBuffers()
     EQ_GL_CALL( glUnmapBuffer( GL_SHADER_STORAGE_BUFFER ));
 
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, 0 ));
-
-
-    // for blur
-    EQ_GL_CALL( glBindBuffer( GL_ARRAY_BUFFER, _rectVBO ));
-    EQ_GL_CALL( glBufferData( GL_ARRAY_BUFFER, sizeof(float) * 8, 0,
-                              GL_STATIC_DRAW ));
-    EQ_GL_CALL( glBindBuffer( GL_ARRAY_BUFFER, 0 ));
 }
 
 void Renderer::_drawBlurPass( eq::util::FrameBufferObject* targetFBO,
@@ -385,6 +383,8 @@ void Renderer::_osprayRender()
     const eq::PixelViewport& pvp = getPixelViewport();
     const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
 
+    _osprayRenderer->updateCamera( viewData->useOrtho( ));
+
     glWindowPos2i( pvp.x, pvp.y );
     if( _osprayRenderer->render( seq::Vector2i( pvp.w, pvp.h ), getModelMatrix(), viewData->getFOV()[1]))
         requestRedraw();
@@ -427,7 +427,9 @@ void Renderer::_gpuRender()
         EQ_GL_CALL( glScissor( pvp.x, pvp.y, pvp.w, pvp.h ));
         EQ_GL_CALL( glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT ));
 
-        const seq::Matrix4f projectionMatrix = getFrustum().computePerspectiveMatrix();
+        const seq::Matrix4f projectionMatrix = getViewData()->useOrtho()
+                ? getFrustum().computeOrthoMatrix()
+                : getFrustum().computePerspectiveMatrix();
         seq::Matrix4f modelViewMatrix = getViewMatrix() * getModelMatrix();
         modelViewMatrix( 3, 2 ) = -modelViewMatrix( 3, 2 );
 
@@ -456,7 +458,7 @@ void Renderer::_gpuRender()
     }
 
     const ViewData* viewData = static_cast< const ViewData* >( getViewData( ));
-    if( !viewData->useBlur( ))
+    if( !viewData->getBlur( ))
     {
         _blit( _fbo );
         return;
@@ -519,11 +521,11 @@ void Renderer::draw( co::Object* /*frameDataObj*/ )
 
     switch( viewData->getRenderer( ))
     {
-    case RENDERER_GPU:
+    case serializable::RendererType_GPU:
         _gpuRender();
         break;
-    case RENDERER_SPLOTCH_OLD:
-    case RENDERER_SPLOTCH_NEW:
+    case serializable::RendererType_SPLOTCH_OLD:
+    case serializable::RendererType_SPLOTCH_NEW:
     {
         const eq::PixelViewport& pvp = getPixelViewport();
         paramfile& params = model.getParams();
@@ -531,16 +533,16 @@ void Renderer::draw( co::Object* /*frameDataObj*/ )
         params.setParam( "yres", pvp.h );
         params.setParam( "fov", int(viewData->getFOV()[0] ));
         params.setParam( "new_renderer",
-                         viewData->getRenderer() == RENDERER_SPLOTCH_NEW );
+                         viewData->getRenderer() == serializable::RendererType_SPLOTCH_NEW );
         _splotchRender();
         break;
     }
 #ifdef SEQSPLOTCH_USE_OSPRAY
-    case RENDERER_OSPRAY:
+    case serializable::RendererType_OSPRAY:
         _osprayRender();
         break;
 #endif
-    case RENDERER_LAST:
+    case serializable::RendererType_LAST:
     default:
         std::cerr << "Unknown renderer " << int(viewData->getRenderer( )) << std::endl;
         break;

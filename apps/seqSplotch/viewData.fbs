@@ -1,0 +1,22 @@
+// Copyright (c) 2015, Human Brain Project
+//                      Sergio E. Galindo <sergio.galindo@urjc.es>
+//
+
+namespace seqSplotch.serializable;
+
+enum RendererType : uint
+{
+  GPU,
+  SPLOTCH_OLD,
+  SPLOTCH_NEW,
+  OSPRAY,
+  LAST
+}
+
+table ViewData
+{
+  blur:bool = false;
+  blurStrength:float = 0.1;
+  eyeSeparation:float = 0.1;
+  renderer:RendererType = 0;
+}

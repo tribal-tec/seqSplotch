@@ -33,21 +33,13 @@
 
 #include "types.h"
 
+#include "serializables/viewData.h"
+
 namespace seqSplotch
 {
 
-enum RendererType
-{
-    RENDERER_GPU,
-    RENDERER_SPLOTCH_OLD,
-    RENDERER_SPLOTCH_NEW,
-#ifdef SEQSPLOTCH_USE_OSPRAY
-    RENDERER_OSPRAY,
-#endif
-    RENDERER_LAST
-};
-
-class ViewData : public seq::ViewData
+typedef co::Distributable< serializable::ViewData, seq::ViewData, seq::View& > Super;
+class ViewData : public Super
 {
 public:
     explicit ViewData( seq::View& view );
@@ -55,38 +47,14 @@ public:
     ~ViewData();
 
     bool handleEvent( const eq::ConfigEvent* event_ ) final;
-    RendererType getRenderer() const;
-    bool useBlur() const;
-    float getBlurStrength() const;
     seq::Vector2f getFOV() const;
-    float getEyeSeparation() const;
 
 private:
-    enum DirtyBits
-    {
-        DIRTY_RENDERER = seq::ViewData::DIRTY_CUSTOM << 0,
-        DIRTY_BLUR = seq::ViewData::DIRTY_CUSTOM << 1,
-        DIRTY_BLUR_STRENGTH = seq::ViewData::DIRTY_CUSTOM << 2
-    };
-
-    void serialize( co::DataOStream& os, const uint64_t dirtyBits ) final;
-    void deserialize( co::DataIStream& is, const uint64_t dirtyBits ) final;
-
     const seq::Matrix4f _initialModelMatrix;
     Model* _model;
-    RendererType _renderer;
-    bool _useBlur;
-    float _blurStrength;
-    float _eyeSeparation;
     seq::View& _view;
 };
 
-}
-
-namespace lunchbox
-{
-template<> inline void byteswap( seqSplotch::RendererType& value )
-{ byteswap( reinterpret_cast< uint32_t& >( value )); }
 }
 
 #endif

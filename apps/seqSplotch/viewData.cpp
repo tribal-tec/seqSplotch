@@ -36,23 +36,16 @@ namespace seqSplotch
 {
 
 ViewData::ViewData( seq::View& view )
-    : seq::ViewData( view )
+    : Super( view )
     , _model( nullptr )
-    , _renderer( RENDERER_GPU )
-    , _useBlur( false )
-    , _blurStrength( 0.1f )
     , _view( view )
 {
 }
 
 ViewData::ViewData( seq::View& view, Model* model )
-    : seq::ViewData( view )
+    : Super( view )
     , _initialModelMatrix( model->getModelMatrix( ))
     , _model( model )
-    , _renderer( RENDERER_GPU )
-    , _useBlur( false )
-    , _blurStrength( 0.1f )
-    , _eyeSeparation( 0.f )
     , _view( view )
 {
     view.setModelUnit( EQ_MM * 10.f );
@@ -63,7 +56,7 @@ ViewData::ViewData( seq::View& view, Model* model )
         return;
     const auto& leftEye = observer->getEyePosition( eq::EYE_LEFT );
     const auto& rightEye = observer->getEyePosition( eq::EYE_RIGHT );
-    _eyeSeparation = rightEye.x() - leftEye.x();
+    setEyeSeparation( rightEye.x() - leftEye.x( ));
 }
 
 ViewData::~ViewData()
@@ -74,26 +67,6 @@ seq::Vector2f ViewData::getFOV() const
     eq::Projection proj;
     proj = _view.getWall();
     return proj.fov;
-}
-
-float ViewData::getEyeSeparation() const
-{
-    return _eyeSeparation;
-}
-
-RendererType ViewData::getRenderer() const
-{
-    return _renderer;
-}
-
-bool ViewData::useBlur() const
-{
-    return _useBlur;
-}
-
-float ViewData::getBlurStrength() const
-{
-    return _blurStrength;
 }
 
 bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
@@ -111,51 +84,20 @@ bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
             _model->loadNextFrame();
             return true;
         case 'r':
-            _renderer = RendererType((int(_renderer)+1) % RENDERER_LAST);
-            std::cout << "Using renderer " << int(_renderer) << std::endl;
-            setDirty( DIRTY_RENDERER );
+            setRenderer(serializable::RendererType((int(getRenderer())+1) % serializable::RendererType_LAST));
             return true;
         case 'b':
-            _useBlur = !_useBlur;
-            setDirty( DIRTY_BLUR );
+            setBlur( !getBlur( ));
             return true;
         case '+':
-            _blurStrength += 0.05f;
-            setDirty( DIRTY_BLUR_STRENGTH );
+            setBlurStrength( getBlurStrength() + 0.05f );
             return true;
         case '-':
-            _blurStrength -= 0.05f;
-            setDirty( DIRTY_BLUR_STRENGTH );
+            setBlurStrength( getBlurStrength() - 0.05f );
             return true;
         }
     }
     return seq::ViewData::handleEvent( event_ );
-}
-
-void ViewData::serialize( co::DataOStream& os, const uint64_t dirtyBits )
-{
-    seq::ViewData::serialize( os, dirtyBits );
-    if( dirtyBits == DIRTY_ALL )
-        os << _eyeSeparation;
-    if( dirtyBits & DIRTY_RENDERER )
-        os << _renderer;
-    if( dirtyBits & DIRTY_BLUR )
-        os << _useBlur;
-    if( dirtyBits & DIRTY_BLUR_STRENGTH )
-        os << _blurStrength;
-}
-
-void ViewData::deserialize( co::DataIStream& is, const uint64_t dirtyBits )
-{
-    seq::ViewData::deserialize( is, dirtyBits );
-    if( dirtyBits == DIRTY_ALL )
-        is >> _eyeSeparation;
-    if( dirtyBits & DIRTY_RENDERER )
-        is >> _renderer;
-    if( dirtyBits & DIRTY_BLUR )
-        is >> _useBlur;
-    if( dirtyBits & DIRTY_BLUR_STRENGTH )
-        is >> _blurStrength;
 }
 
 }

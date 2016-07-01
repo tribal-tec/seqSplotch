@@ -67,6 +67,10 @@ bool Application::init( int argc, char** argv, co::Object* initData )
     ospInit( &argc, const_cast< const char** >( argv ));
 #endif
 
+#ifdef SEQSPLOTCH_USE_ZEROEQ
+    _httpServer = ::zeroeq::http::Server::parse( argc, argv );
+#endif
+
     return seq::Application::init( argc, argv, initData );
 }
 
@@ -100,17 +104,39 @@ co::Object* Application::createObject( const uint32_t type )
 
 seq::ViewData* Application::createViewData( seq::View& view )
 {
-    return new ViewData( view, _model.get( ));
+    ViewData* viewData = new ViewData( view, _model.get( ));
+
+#ifdef SEQSPLOTCH_USE_ZEROEQ
+    if( _httpServer )
+        _httpServer->add( *viewData );
+#endif
+
+    return viewData;
 }
 
 void Application::destroyViewData( seq::ViewData* viewData )
 {
+#ifdef SEQSPLOTCH_USE_ZEROEQ
+    if( _httpServer )
+        _httpServer->remove( static_cast< ViewData& >( *viewData ));
+#endif
+
     delete viewData;
 }
 
 Model& Application::getModel()
 {
-     return *_model;
+    return *_model;
+}
+
+bool Application::handleEvents()
+{
+#ifdef SEQSPLOTCH_USE_ZEROEQ
+    bool redraw = false;
+    while( _httpServer && _httpServer->receive( 0 ))
+        redraw = true;
+    return redraw;
+#endif
 }
 
 }

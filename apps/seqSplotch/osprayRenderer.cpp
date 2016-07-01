@@ -41,6 +41,7 @@ OSPRayRenderer::OSPRayRenderer()
     , _renderer( nullptr )
     , _camera( nullptr )
     , _accumStep( 0 )
+    , _ortho( false )
 {
 }
 
@@ -68,11 +69,6 @@ void OSPRayRenderer::update( Model& model )
         OSPData dirLightArray = ospNewData( dirLights.size(), OSP_OBJECT, &dirLights[0], 0 );
         ospSetData( _renderer, "directionalLights", dirLightArray );
         ospSetData( _renderer, "lights", dirLightArray );
-
-        _camera = ospNewCamera( "perspective" );
-        ospCommit( _camera );
-
-        ospSetObject( _renderer, "camera", _camera );
         ospCommit( _renderer );
     }
 
@@ -142,6 +138,23 @@ void OSPRayRenderer::update( Model& model )
     _accumStep = 0;
 }
 
+void OSPRayRenderer::updateCamera( const bool ortho )
+{
+    if( ortho == _ortho && _camera )
+        return;
+
+    _ortho = ortho;
+
+    if( _camera )
+        ospRelease( _camera );
+
+    _camera = ospNewCamera( ortho ? "orthographic" : "perspective" );
+    ospCommit( _camera );
+    ospSetObject( _renderer, "camera", _camera );
+    ospCommit( _renderer );
+    _accumStep = 0;
+}
+
 bool OSPRayRenderer::render( const seq::Vector2i& size,
                              const seq::Matrix4f& matrix, const float fovy )
 {
@@ -156,7 +169,6 @@ bool OSPRayRenderer::render( const seq::Vector2i& size,
         _fb = ospNewFrameBuffer( newSize, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM );
         ospFrameBufferClear( _fb, OSP_FB_COLOR );
         _accumStep = 0;
-        ospSetf( _camera, "aspect", float(size[0]) / float(size[1]) );
     }
 
     static seq::Matrix4f previous;
@@ -174,7 +186,11 @@ bool OSPRayRenderer::render( const seq::Vector2i& size,
     ospSetVec3f( _camera, "pos", reinterpret_cast<osp::vec3f&>(origin) );
     ospSetVec3f( _camera, "dir", reinterpret_cast<osp::vec3f&>(lookAt));
     ospSetVec3f( _camera, "up", reinterpret_cast<osp::vec3f&>(up));
-    ospSetf( _camera, "fovy", fovy );
+    ospSetf( _camera, "aspect", float(size[0]) / float(size[1]) );
+    if( _ortho )
+        ospSetf( _camera, "height", size[1]*15);
+    else
+        ospSetf( _camera, "fovy", fovy );
     ospCommit( _camera );
 
     ospRenderFrame( _fb, _renderer, OSP_FB_COLOR | OSP_FB_ACCUM );

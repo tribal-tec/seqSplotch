@@ -2,3 +2,5 @@
 git_subproject(Equalizer https://github.com/tribal-tec/Equalizer.git 5cd2b24)
 git_subproject(Fivox https://github.com/BlueBrain/Fivox.git 9f7536a)
 git_subproject(splotch https://github.com/tribal-tec/splotch.git 5618e01)
+git_subproject(ZeroBuf https://github.com/HBPVIS/ZeroBuf.git af22a21)
+git_subproject(ZeroEQ https://github.com/HBPVis/ZeroEQ.git 1014ea8)

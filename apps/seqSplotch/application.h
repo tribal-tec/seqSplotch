@@ -31,6 +31,10 @@
 
 #include <seq/sequel.h>
 
+#ifdef SEQSPLOTCH_USE_ZEROEQ
+#  include <zeroeq/http/server.h>
+#endif
+
 #include "types.h"
 
 namespace seqSplotch
@@ -55,7 +59,13 @@ private:
     seq::ViewData* createViewData( seq::View& view ) final;
     void destroyViewData( seq::ViewData* viewData ) final;
 
+    bool handleEvents() final;
+
     std::unique_ptr< Model > _model;
+
+#ifdef SEQSPLOTCH_USE_ZEROEQ
+    std::unique_ptr< ::zeroeq::http::Server > _httpServer;
+#endif
 };
 
 }

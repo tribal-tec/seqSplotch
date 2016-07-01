@@ -9,14 +9,19 @@ stringify_shaders(
   particles.vert
 )
 
-set(SEQSPLOTCH_HEADERS
+include(zerobufGenerateCxx)
+zerobuf_generate_cxx(SEQSPLOTCH ${CMAKE_CURRENT_BINARY_DIR}/serializables
+  viewData.fbs
+)
+
+list(APPEND SEQSPLOTCH_HEADERS
   application.h
   model.h
   renderer.h
   viewData.h
 )
 
-set(SEQSPLOTCH_SOURCES
+list(APPEND SEQSPLOTCH_SOURCES
   application.cpp
   main.cpp
   model.cpp
@@ -25,12 +30,16 @@ set(SEQSPLOTCH_SOURCES
   ${SHADER_SOURCES}
 )
 
-set(SEQSPLOTCH_LINK_LIBRARIES Sequel splotch)
+set(SEQSPLOTCH_LINK_LIBRARIES Sequel splotch ZeroBuf)
 
 if(OSPRAY_FOUND)
     list(APPEND SEQSPLOTCH_HEADERS osprayRenderer.h)
     list(APPEND SEQSPLOTCH_SOURCES osprayRenderer.cpp)
     list(APPEND SEQSPLOTCH_LINK_LIBRARIES ${OSPRAY_LIBRARIES})
+endif()
+
+if(TARGET ZeroEQ)
+  list(APPEND SEQSPLOTCH_LINK_LIBRARIES ZeroEQ)
 endif()
 
 if(TARGET splotchCUDA)
