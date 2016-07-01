@@ -50,6 +50,7 @@ public:
     seq::Vector2f getFOV() const;
 
 private:
+    void notifyChanged() final;
     const seq::Matrix4f _initialModelMatrix;
     Model* _model;
     seq::View& _view;

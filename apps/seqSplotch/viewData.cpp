@@ -100,4 +100,9 @@ bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
     return seq::ViewData::handleEvent( event_ );
 }
 
+void ViewData::notifyChanged()
+{
+    ::seq::ViewData::setOrtho( ViewData::getOrtho( ));
+}
+
 }
