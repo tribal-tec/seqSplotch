@@ -28,9 +28,21 @@
 
 #include "application.h"
 
-int main( const int argc, char** argv )
+#ifdef SEQSPLOTCH_USE_QT5WIDGETS
+#  include <QApplication>
+#  include <QScopedPointer>
+#endif
+
+int main( int argc, char** argv )
 {
     lunchbox::RefPtr< seqSplotch::Application > app( new seqSplotch::Application );
+
+#ifdef SEQSPLOTCH_USE_QT5WIDGETS
+#  ifdef __linux__
+        ::XInitThreads();
+#  endif
+    QScopedPointer< QApplication > qtApp( new QApplication( argc, argv ));
+#endif
 
     if( app->init( argc, argv, nullptr ) && app->run( nullptr ) && app->exit( ))
         return EXIT_SUCCESS;

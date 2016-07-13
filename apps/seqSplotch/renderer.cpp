@@ -70,6 +70,12 @@ bool Renderer::init( co::Object* initData )
     if( !seq::Renderer::init( initData ))
         return false;
 
+    if( !GLEW_VERSION_4_3 )
+    {
+        LBINFO << "GPU renderer not enabled, requires OpenGL 4.3" << std::endl;
+        return true;
+    }
+
     if( !_loadShaders( ))
         return false;
 
@@ -362,8 +368,8 @@ void Renderer::_splotchRender()
             memcpy( &_pixels[k], &pic[i][j], 3 * sizeof( float ));
     }
 
-    glWindowPos2i( pvp.x, pvp.y );
-    glDrawPixels( width, height, GL_RGB, GL_FLOAT, _pixels.getData( ));
+    EQ_GL_CALL( glWindowPos2i( pvp.x, pvp.y ));
+    EQ_GL_CALL( glDrawPixels( width, height, GL_RGB, GL_FLOAT, _pixels.getData( )));
 }
 
 void Renderer::_osprayRender()
@@ -385,7 +391,7 @@ void Renderer::_osprayRender()
 
     _osprayRenderer->updateCamera( viewData->getCamera( ));
 
-    glWindowPos2i( pvp.x, pvp.y );
+    EQ_GL_CALL( glWindowPos2i( pvp.x, pvp.y ));
     if( _osprayRenderer->render( seq::Vector2i( pvp.w, pvp.h ), getModelMatrix(), viewData->getFOV()[1]))
         requestRedraw();
 #endif
@@ -393,6 +399,9 @@ void Renderer::_osprayRender()
 
 void Renderer::_gpuRender()
 {
+    if( !GLEW_VERSION_4_3 )
+        return;
+
     _updateGPUBuffers();
 
     const eq::PixelViewport& pvp = getPixelViewport();

@@ -219,7 +219,7 @@ bool OSPRayRenderer::render( const seq::Vector2i& size,
 
     uint32_t* ucharFB = (uint32_t *)ospMapFrameBuffer( _fb );
 
-    glDrawPixels( size[0], size[1], GL_RGBA, GL_UNSIGNED_BYTE, ucharFB );
+    EQ_GL_CALL( glDrawPixels( size[0], size[1], GL_RGBA, GL_UNSIGNED_BYTE, ucharFB ));
 
     ospUnmapFrameBuffer( ucharFB, _fb );
 
