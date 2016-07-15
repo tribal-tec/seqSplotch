@@ -30,6 +30,7 @@ common_find_package(OSPRay SYSTEM)
 common_find_package(Qt5Widgets)
 common_find_package(ZeroBuf REQUIRED)
 common_find_package(ZeroEQ)
+common_find_package(X11 SYSTEM)
 common_find_package_post()
 
 add_subdirectory(apps)

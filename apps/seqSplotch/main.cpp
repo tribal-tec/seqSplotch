@@ -33,6 +33,10 @@
 #  include <QScopedPointer>
 #endif
 
+#ifdef __linux__
+#  include <X11/Xlib.h>
+#endif
+
 int main( int argc, char** argv )
 {
     lunchbox::RefPtr< seqSplotch::Application > app( new seqSplotch::Application );
