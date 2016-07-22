@@ -102,6 +102,32 @@ bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
         case '-':
             setBlurStrength( getBlurStrength() - 0.05f );
             return true;
+        case 'l':
+        {
+            auto& canvas = _view.getConfig()->getCanvases().front();
+            uint32_t index = canvas->getActiveLayoutIndex() + 1;
+            const auto& layouts = canvas->getLayouts();
+            index %= layouts.size();
+            canvas->useLayout( index );
+
+            const eq::Layout* layout = layouts[index];
+            std::ostringstream stream;
+            stream << "Layout ";
+            if( layout )
+            {
+                const std::string& name = layout->getName();
+                if( name.empty( ))
+                    stream << index;
+                else
+                    stream << name;
+            }
+            else
+                stream << "NONE";
+
+            stream << " active";
+            LBINFO << stream.str() << std::endl;
+            return true;
+        }
         }
     }
     return seq::ViewData::handleEvent( event_ );

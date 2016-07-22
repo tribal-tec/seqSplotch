@@ -276,19 +276,10 @@ void Renderer::_blit( eq::util::FrameBufferObject* fbo )
 
 void Renderer::_splotchRender()
 {
-    Application& application = static_cast< Application& >( getApplication( ));
-    Model& model = application.getModel();
-
-    const eq::PixelViewport& pvp = getPixelViewport();
-    const int width = pvp.w;
-    const int height = pvp.h;
-
-    arr2< COLOUR > pic( width, height );
     seq::Vector3f origin, lookAt, up;
-    getModelMatrix().getLookAt( origin, lookAt, up );
-    auto particles = model.getParticles();
-    paramfile& params = model.getParams();
-
+    seq::Matrix4f modelViewMatrix = getViewMatrix() * getModelMatrix();
+    modelViewMatrix( 3, 2 ) = -modelViewMatrix( 3, 2 );
+    modelViewMatrix.getLookAt( origin, lookAt, up );
     seq::Vector3f eye = origin;
     if( getRenderContext().eye != eq::EYE_CYCLOP )
     {
@@ -306,10 +297,19 @@ void Renderer::_splotchRender()
         case eq::EYE_RIGHT:
             eye = origin + right / right.length()  * dist2;
             break;
-        default:;
+        default:
+            ;
         }
     }
 
+    Application& application = static_cast< Application& >( getApplication( ));
+    Model& model = application.getModel();
+    auto particles = model.getParticles();
+    paramfile& params = model.getParams();
+    const eq::PixelViewport& pvp = getPixelViewport();
+    const int width = pvp.w;
+    const int height = pvp.h;
+    arr2< COLOUR > pic( width, height );
 #ifdef CUDA
     cuda_rendering( 0, 1, pic, particles,
                     vec3( eye.x(), eye.y(), eye.z()),
