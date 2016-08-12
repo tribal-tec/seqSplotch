@@ -122,6 +122,12 @@ size_t Model::getFrameIndex() const
 
 void Model::_computeBoundingSphere()
 {
+    if( getParticles().empty( ))
+    {
+        _boundingSphere = seq::Vector4f( 0, 0, 0, 1 );
+        return;
+    }
+
     BoundingBox bbox;
     bbox.Compute( getParticles( ));
 

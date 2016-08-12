@@ -196,6 +196,8 @@ void Renderer::_updateGPUBuffers()
     }
 
     _numParticles = filteredParticles.size();
+    if( _numParticles == 0 )
+        return;
 
     EQ_GL_CALL( glBindBuffer( GL_SHADER_STORAGE_BUFFER, _posSSBO ));
     EQ_GL_CALL( glBufferData( GL_SHADER_STORAGE_BUFFER,
@@ -276,6 +278,12 @@ void Renderer::_blit( eq::util::FrameBufferObject* fbo )
 
 void Renderer::_splotchRender()
 {
+    Application& application = static_cast< Application& >( getApplication( ));
+    Model& model = application.getModel();
+    auto particles = model.getParticles();
+    if( particles.empty( ))
+        return;
+
     seq::Vector3f origin, lookAt, up;
     seq::Matrix4f modelViewMatrix = getViewMatrix() * getModelMatrix();
     modelViewMatrix( 3, 2 ) = -modelViewMatrix( 3, 2 );
@@ -302,9 +310,6 @@ void Renderer::_splotchRender()
         }
     }
 
-    Application& application = static_cast< Application& >( getApplication( ));
-    Model& model = application.getModel();
-    auto particles = model.getParticles();
     paramfile& params = model.getParams();
     const eq::PixelViewport& pvp = getPixelViewport();
     const int width = pvp.w;
@@ -403,6 +408,8 @@ void Renderer::_gpuRender()
         return;
 
     _updateGPUBuffers();
+    if( _numParticles == 0 )
+        return;
 
     const eq::PixelViewport& pvp = getPixelViewport();
     _fbo->resize( pvp.w, pvp.h );
