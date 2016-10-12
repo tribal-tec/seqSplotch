@@ -76,13 +76,13 @@ Camera ViewData::getCamera() const
     return getOrtho() ? CAM_ORTHO : CAM_PERSPECTIVE;
 }
 
-bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
+bool ViewData::handleEvent( const eq::EventType type,
+                            const seq::KeyEvent& keyEvent )
 {
-    const eq::Event& event = event_->data;
-    switch( event.type )
+    switch( type )
     {
-    case eq::Event::KEY_PRESS:
-        switch( event.keyPress.key )
+    case eq::EVENT_KEY_PRESS:
+        switch( keyEvent.key )
         {
         case ' ':
             setModelMatrix( _initialModelMatrix );
@@ -129,8 +129,9 @@ bool ViewData::handleEvent( const eq::ConfigEvent* event_ )
             return true;
         }
         }
+    default:
+        return seq::ViewData::handleEvent( type, keyEvent );
     }
-    return seq::ViewData::handleEvent( event_ );
 }
 
 void ViewData::notifyChanged()

@@ -46,7 +46,7 @@ public:
     ViewData( seq::View& view, Model* model );
     ~ViewData();
 
-    bool handleEvent( const eq::ConfigEvent* event_ ) final;
+    bool handleEvent( eq::EventType type, const seq::KeyEvent& keyEvent ) final;
     seq::Vector2f getFOV() const;
     Camera getCamera() const;
 
