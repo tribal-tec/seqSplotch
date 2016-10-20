@@ -91,7 +91,7 @@ bool ViewData::handleEvent( const eq::EventType type,
             _model->loadNextFrame();
             return true;
         case 'r':
-            setRenderer(serializable::RendererType((int(getRenderer())+1) % serializable::RendererType_LAST));
+            setRenderer(serializable::RendererType((int(getRenderer())+1) % (int(serializable::RendererType::OSPRAY)+1)));
             return true;
         case 'b':
             setBlur( !getBlur( ));

@@ -108,7 +108,7 @@ seq::ViewData* Application::createViewData( seq::View& view )
 
 #ifdef SEQSPLOTCH_USE_ZEROEQ
     if( _httpServer )
-        _httpServer->add( *viewData );
+        _httpServer->handle( *viewData );
 #endif
 
     return viewData;

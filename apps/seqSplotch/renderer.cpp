@@ -537,11 +537,11 @@ void Renderer::draw( co::Object* /*frameDataObj*/ )
 
     switch( viewData->getRenderer( ))
     {
-    case serializable::RendererType_GPU:
+    case serializable::RendererType::GPU:
         _gpuRender();
         break;
-    case serializable::RendererType_SPLOTCH_OLD:
-    case serializable::RendererType_SPLOTCH_NEW:
+    case serializable::RendererType::SPLOTCH_OLD:
+    case serializable::RendererType::SPLOTCH_NEW:
     {
         const eq::PixelViewport& pvp = getPixelViewport();
         paramfile& params = model.getParams();
@@ -549,16 +549,15 @@ void Renderer::draw( co::Object* /*frameDataObj*/ )
         params.setParam( "yres", pvp.h );
         params.setParam( "fov", int(viewData->getFOV()[0] ));
         params.setParam( "new_renderer",
-                         viewData->getRenderer() == serializable::RendererType_SPLOTCH_NEW );
+                         viewData->getRenderer() == serializable::RendererType::SPLOTCH_NEW );
         _splotchRender();
         break;
     }
 #ifdef SEQSPLOTCH_USE_OSPRAY
-    case serializable::RendererType_OSPRAY:
+    case serializable::RendererType::OSPRAY:
         _osprayRender();
         break;
 #endif
-    case serializable::RendererType_LAST:
     default:
         std::cerr << "Unknown renderer " << int(viewData->getRenderer( )) << std::endl;
         break;

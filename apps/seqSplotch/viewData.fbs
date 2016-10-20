@@ -9,8 +9,7 @@ enum RendererType : uint
   GPU,
   SPLOTCH_OLD,
   SPLOTCH_NEW,
-  OSPRAY,
-  LAST
+  OSPRAY
 }
 
 table ViewData
